@@ -7,5 +7,14 @@
     "platforms": ["QX", "Loon", "Surge"],
     "cron": "10 7 * * *",
     "updated": "2026-05-29"
+  },
+  {
+    "name": "v2ex",
+    "file": "scripts/v2ex/v2ex.js",
+    "desc": "V2EX 每日签到领取铜币（三端兼容）",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "cron": "10 9 * * *",
+    "updated": "2026-05-30"
   }
 ]
