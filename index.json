@@ -1,0 +1,11 @@
+[
+  {
+    "name": "glados",
+    "file": "scripts/glados/glados.js",
+    "desc": "GLaDOS / Railgun 自动签到 + 积分兑换（多账号、三端兼容）",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "cron": "10 7 * * *",
+    "updated": "2026-05-29"
+  }
+]
