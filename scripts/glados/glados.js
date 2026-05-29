@@ -5,19 +5,21 @@
 
 使用说明：
   访问 GLaDOS 任意域名的 /console/account 页面抓包保存 Cookie，定时任务自动对已保存 Cookie 的域名执行签到。
-  支持 glados.network、railgun.info、glados.vip，各域名支持多账号。
+  支持 glados.network、railgun.info、glados.vip、glados.one、glados.space，各域名支持多账号。
   同一域名多次抓包可保存不同账号的 Cookie。
 
 [rewrite_local]
 ^https:\/\/glados\.network\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 ^https:\/\/railgun\.info\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 ^https:\/\/glados\.vip\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https:\/\/glados\.one\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https:\/\/glados\.space\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 
 [task_local]
 10 7 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, tag=GLaDOS 签到, enabled=true
 
 [MITM]
-hostname = %APPEND% glados.network, railgun.info, glados.vip
+hostname = %APPEND% glados.network, railgun.info, glados.vip, glados.one, glados.space
 *******************************/
 
 var isQX = typeof $task !== "undefined";
@@ -50,7 +52,7 @@ var notify = isQX
 
 var COOKIES_KEY_PREFIX = "GLaDOS_Cookies";
 var DOMAINS_LIST_KEY = "GLaDOS_Domains";
-var DOMAINS = ["glados.network", "railgun.info", "glados.vip"];
+var DOMAINS = ["glados.network", "railgun.info", "glados.vip", "glados.one", "glados.space"];
 var EXCHANGE_PLAN = "plan500";
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 var isGetHeader = typeof $request !== "undefined";

@@ -2,7 +2,7 @@
 
 ## 功能
 
-- 支持 glados.network、railgun.info、glados.vip 三个域名
+- 支持 glados.network、railgun.info、glados.vip、glados.one、glados.space 五个域名
 - 每个域名支持多账号
 - 自动签到 + 积分查询 + 积分兑换（≥500 积分自动兑换 plan500）
 
@@ -18,9 +18,11 @@
 ^https:\/\/glados\.network\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 ^https:\/\/railgun\.info\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 ^https:\/\/glados\.vip\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https:\/\/glados\.one\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https:\/\/glados\.space\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 
 [MITM]
-hostname = %APPEND% glados.network, railgun.info, glados.vip
+hostname = %APPEND% glados.network, railgun.info, glados.vip, glados.one, glados.space
 ```
 
 **Loon**
