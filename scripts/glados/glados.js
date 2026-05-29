@@ -117,7 +117,10 @@ function saveCookie(domain, cookie) {
 
 function getHostFromRequest() {
   var h = ($request && $request.headers) || {};
-  return h.Host || h.host || "";
+  if (h.Host || h.host) return h.Host || h.host;
+  var url = ($request && $request.url) || "";
+  var m = url.match(/^https?:\/\/([^\/]+)/);
+  return m ? m[1] : "";
 }
 
 function request(url, method, cookie, domain, body) {
@@ -247,9 +250,6 @@ async function checkinForAccount(cookie, domain, accountLabel) {
 }
 
 if (isGetHeader) {
-  console.log("[GLaDOS DEBUG] $request keys: " + Object.keys($request).join(", "));
-  console.log("[GLaDOS DEBUG] $request.headers: " + JSON.stringify($request.headers));
-  console.log("[GLaDOS DEBUG] $request.url: " + ($request.url || "undefined"));
   var allHeaders = $request.headers || {};
   var cookie = allHeaders.Cookie || allHeaders.cookie || "";
   var host = getHostFromRequest();
