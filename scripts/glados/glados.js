@@ -247,6 +247,9 @@ async function checkinForAccount(cookie, domain, accountLabel) {
 }
 
 if (isGetHeader) {
+  console.log("[GLaDOS DEBUG] $request keys: " + Object.keys($request).join(", "));
+  console.log("[GLaDOS DEBUG] $request.headers: " + JSON.stringify($request.headers));
+  console.log("[GLaDOS DEBUG] $request.url: " + ($request.url || "undefined"));
   var allHeaders = $request.headers || {};
   var cookie = allHeaders.Cookie || allHeaders.cookie || "";
   var host = getHostFromRequest();
