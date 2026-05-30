@@ -6,7 +6,7 @@
 使用说明：先访问 V2EX 个人主页保存 Cookie，再由定时任务自动签到。
 
 [rewrite_local]
-^https:\/\/www\.v2ex\.com\/ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js
+^https:\/\/www\.v2ex\.com\/(mission|member).* url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js
 
 [task_local]
 10 9 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, tag=V2EX 每日签到, enabled=true
@@ -77,9 +77,9 @@ function formatBalance(html) {
     if (!html) return "";
     var balanceBlock = html.match(/balance_area bigger[\s\S]*?<\/div>/);
     if (!balanceBlock) return "";
-    var gold = (balanceBlock[0].match(/(\d+)\s*<img[^>]*alt="G"/) || [])[1];
-    var silver = (balanceBlock[0].match(/(\d+)\s*<img[^>]*alt="S"/) || [])[1];
-    var bronze = (balanceBlock[0].match(/(\d+)\s*<img[^>]*alt="B"/) || [])[1];
+    var gold = (balanceBlock[0].match(/(\d+)\s*<img.*?alt="G"/) || [])[1];
+    var silver = (balanceBlock[0].match(/(\d+)\s*<img.*?alt="S"/) || [])[1];
+    var bronze = (balanceBlock[0].match(/(\d+)\s*<img.*?alt="B"/) || [])[1];
     var result = "";
     if (gold) result += gold + "金";
     if (silver) result += silver + "银";
@@ -96,14 +96,14 @@ if (isGetHeader) {
   var cookie = allHeaders.Cookie || allHeaders.cookie || "";
   if (!cookie) {
     console.log("[V2EX] Cookie not found in request headers");
-    $done({});
+    return $done({});
   }
   var saved = saveCookie(cookie);
   if (saved) {
     console.log("[V2EX] Cookie captured and updated");
     notify("V2EX", "Cookie 已更新", "后续将用于自动签到");
   }
-  $done({});
+  return $done({});
 } else {
   (function() {
     var storedCookie = getStoredCookie();

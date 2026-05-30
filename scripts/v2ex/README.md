@@ -15,7 +15,7 @@
 **QX**
 ```ini
 [rewrite_local]
-^https:\/\/www\.v2ex\.com\/ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js
+^https:\/\/www\.v2ex\.com\/(mission|member).* url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js
 
 [MITM]
 hostname = %APPEND% www.v2ex.com
@@ -24,7 +24,7 @@ hostname = %APPEND% www.v2ex.com
 **Loon**
 ```ini
 [Script]
-http-request ^https://www\.v2ex\.com/$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, requires-body=false, timeout=10, tag=V2EX抓包, enable=true
+http-request ^https://www\.v2ex\.com/(mission|member).*$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, requires-body=false, timeout=10, tag=V2EX抓包, enable=true
 cron "10 9 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, timeout=60, tag=V2EX签到, enable=true
 
 [MITM]
@@ -34,7 +34,7 @@ hostname = www.v2ex.com
 **Surge**
 ```ini
 [Script]
-V2EX 抓包 = type=http-request, pattern=^https://www\.v2ex\.com/$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, timeout=10
+V2EX 抓包 = type=http-request, pattern=^https://www\.v2ex\.com/(mission|member).*$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, timeout=10
 V2EX 签到 = type=cron, cronexp="10 9 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/refs/heads/main/scripts/v2ex/v2ex.js, timeout=60
 
 [MITM]
