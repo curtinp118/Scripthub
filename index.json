@@ -2,7 +2,7 @@
   {
     "name": "glados",
     "file": "scripts/glados/glados.js",
-    "desc": "GLaDOS / Railgun 自动签到 + 积分兑换（多账号、三端兼容）",
+    "desc": "GLaDOS / Railgun 自动签到 + 积分兑换（多账号）",
     "author": "Curtinp118",
     "platforms": ["QX", "Loon", "Surge"],
     "cron": "10 7 * * *",
@@ -11,7 +11,7 @@
   {
     "name": "v2ex",
     "file": "scripts/v2ex/v2ex.js",
-    "desc": "V2EX 每日签到领取铜币（三端兼容）",
+    "desc": "V2EX 每日签到领取铜币",
     "author": "Curtinp118",
     "platforms": ["QX", "Loon", "Surge"],
     "cron": "10 9 * * *",
