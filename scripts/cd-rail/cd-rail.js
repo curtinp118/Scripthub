@@ -1,6 +1,6 @@
-/******************************
+/****************************** 
 脚本功能：成都地铁签到(积分)
-Version  : v1.1.0
+Version  : v1.2.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
@@ -49,69 +49,55 @@ var notifyFn = isQX
 
 // ========== Logger 模块 ==========
 var Logger = {
-  info: function (msg) { console.log("ℹ️ INFO    │ " + msg); },
-  success: function (msg) { console.log("✅ SUCCESS │ " + msg); },
-  warn: function (msg) { console.log("⚠️ WARN    │ " + msg); },
-  error: function (msg) { console.log("❌ ERROR   │ " + msg); },
-
-  scriptStart: function (name, version) {
+  scriptStart: function (name, version, platform, requestType) {
     var now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
     var time = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-    console.log("🚀 [" + name + "] Script Start");
-    console.log("📅 Time: " + time);
-    console.log("📦 Version: " + version);
+    console.log("🚀 Script Start");
+    console.log("Time     : " + time);
+    console.log("Version  : " + version + " | " + platform + " | " + requestType);
+    console.log("Platform : " + platform);
+    console.log("------------------------------------");
   },
 
-  envCheck: function (platform, requestType, notifyEnabled, proxyEnabled) {
-    console.log("🔍 Environment Check");
-    console.log("Platform   : " + platform);
-    console.log("Request    : " + requestType);
-    console.log("Notify     : " + (notifyEnabled ? "Enabled" : "Disabled"));
-    console.log("Proxy      : " + (proxyEnabled === null ? "N/A" : (proxyEnabled ? "Enabled" : "Disabled")));
-    console.log("");
-    console.log("✅ Environment Ready");
-  },
-
-  configLoading: function (cookieValid, tokenStatus, accountCount) {
-    console.log("📂 Config Loading");
-    var cookieIcon = cookieValid === true ? "Valid ✅" : cookieValid === false ? "Invalid ❌" : "Missing ⚠️";
-    console.log("Cookie Status  : " + cookieIcon);
-    console.log("Token Status   : " + tokenStatus);
-    console.log("Account Count  : " + accountCount);
-    console.log("");
-    console.log("✅ Config Ready");
+  envCheck: function (cookieValid, tokenStatus) {
+    console.log("📂 Environment");
+    console.log("- Cookie : " + (cookieValid ? "Valid" : "Invalid"));
+    console.log("- Token  : " + tokenStatus);
+    console.log("------------------------------------");
   },
 
   accountHeader: function (index, domain) {
-    console.log("━━━━━━━━━━━━━━━━━━");
-    if (index !== undefined && index !== null) {
-      console.log("👤 Account #" + index);
-    } else {
-      console.log("👤 Account");
-    }
-    if (domain) console.log("🌐 Domain : " + domain);
-    console.log("━━━━━━━━━━━━━━━━━━");
+    console.log("👤 Account | " + domain);
   },
 
-  status: function (icon, text) { console.log("📊 Status   : " + icon + " " + text); },
-  points: function (val) { console.log("🎯 Points   : " + val); },
-
-  taskSummary: function (total, success, duplicate, failed) {
-    console.log("📋 Task Summary");
-    console.log("");
-    console.log("Total     : " + total);
-    console.log("Success   : " + success);
-    console.log("Duplicate : " + duplicate);
-    console.log("Failed    : " + failed);
+  field: function (label, value) {
+    var padding = "              ";
+    var key = (label + padding).substring(0, 14);
+    console.log(key + ": " + value);
   },
 
-  scriptFinished: function () { console.log("✅ Script Finished"); }
+  status: function (icon, text) { this.field("Status", icon + " " + text); },
+  points: function (val) { this.field("Points", val); },
+  action: function (val) { this.field("Action", val); },
+  message: function (val) { this.field("Message", val); },
+
+  separator: function () { console.log("------------------------------------"); },
+
+  summary: function (total, success, duplicate, failed, result) {
+    console.log("📊 Summary");
+    console.log("Total      : " + total);
+    console.log("Success    : " + success);
+    console.log("Duplicate  : " + duplicate);
+    console.log("Failed     : " + failed);
+    console.log("🎯 Result  : " + result);
+    console.log("End");
+  }
 };
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "CDRail";
-var SCRIPT_VERSION = "v1.1.0";
+var SCRIPT_VERSION = "v1.2.0";
 var CD_HEADER_KEY = "CD_CDRailHeaders";
 var isGetHeader = typeof $request !== "undefined";
 
@@ -146,43 +132,40 @@ function pickNeedHeaders(src) {
 
 // ========== 主流程 ==========
 if (isGetHeader) {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Manual");
 
   var allHeaders = $request.headers || {};
   var picked = pickNeedHeaders(allHeaders);
 
   if (!picked || Object.keys(picked).length === 0) {
-    Logger.error("未抓到请求头");
-    notifyFn("成都地铁", "未抓到请求头", "请在 App 内打开签到页，触发一次签到请求后再试");
+    Logger.status("⚠️", "未抓到请求头");
+    notifyFn("成都地铁 抓包", "", "状态：失败\n未获取到请求头");
     $done({});
   } else {
     var ok = $store.write(JSON.stringify(picked), CD_HEADER_KEY);
-    Logger.success("已保存请求头 (" + Object.keys(picked).length + " 个字段)");
-    notifyFn(ok ? "成都地铁 用户信息 获取成功" : "成都地铁 Headers 保存失败", "", ok ? "已保存用户信息，后续将用于自动签到" : "保存失败，请检查配置");
-    Logger.scriptFinished();
+    Logger.status("✅", ok ? "请求头已保存" : "保存失败");
+    Logger.field("Fields", Object.keys(picked).length);
+    notifyFn("成都地铁 抓包", "", ok ? "状态：成功\n请求头已保存" : "状态：失败\n保存失败");
     $done({});
   }
 } else {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
-  Logger.envCheck(getPlatform(), "Cron", true, null);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Cron");
 
   var raw = $store.read(CD_HEADER_KEY);
   if (!raw) {
-    Logger.configLoading(false, "Missing", 0);
-    Logger.error("缺少请求头，请先抓包");
-    notifyFn("成都地铁", "缺少请求头", "请先抓包：在 App 内触发一次签到请求");
-    Logger.scriptFinished();
+    Logger.envCheck(false, "Missing");
+    Logger.status("⚠️", "缺少请求头");
+    notifyFn("成都地铁签到", "", "状态：失败\n原因：缺少请求头，请先抓包");
     $done();
   } else {
     var savedHeaders = safeJsonParse(raw);
     if (!savedHeaders) {
-      Logger.configLoading(false, "Invalid", 0);
-      Logger.error("请求头解析失败");
-      notifyFn("成都地铁", "请求头异常", "解析失败，请重新抓包");
-      Logger.scriptFinished();
+      Logger.envCheck(false, "Invalid");
+      Logger.status("⚠️", "请求头解析失败");
+      notifyFn("成都地铁签到", "", "状态：失败\n原因：请求头解析失败");
       $done();
     } else {
-      Logger.configLoading(true, "Found", 1);
+      Logger.envCheck(true, "Found");
       Logger.accountHeader(null, "app.cdmetro.chengdurail.cn");
 
       var headers = {
@@ -209,8 +192,7 @@ if (isGetHeader) {
 
       $http.fetch({
         url: "https://app.cdmetro.chengdurail.cn/platform/users/user/sign-in-integral",
-        method: "GET",
-        headers: headers
+        method: "GET", headers: headers
       }).then(function (resp) {
         var status = resp.statusCode;
         var body = resp.body || "";
@@ -225,38 +207,40 @@ if (isGetHeader) {
 
         if (status === 401 || status === 403) {
           Logger.status("❌", "登录失效 HTTP " + status);
-          Logger.taskSummary(1, 0, 0, 1);
-          notifyFn("成都地铁", "登录失效", "HTTP " + status + "，请重新抓包");
+          Logger.separator();
+          Logger.summary(1, 0, 0, 1, "登录失效");
+          notifyFn("成都地铁签到", "", "状态：失败\n原因：登录失效 HTTP " + status);
         } else if (status >= 200 && status < 300) {
           if (code === "0" && (msg === "SUCCESS" || msg === "")) {
             var inc = integralIncrement !== undefined ? String(integralIncrement) : "";
             Logger.status("✅", "签到成功");
             if (inc) Logger.points("+" + inc);
-            Logger.taskSummary(1, 1, 0, 0);
-            notifyFn("成都地铁", "签到成功", inc ? "获得积分 +" + inc : "签到成功");
+            Logger.separator();
+            Logger.summary(1, 1, 0, 0, "签到成功");
+            notifyFn("成都地铁签到", "", "状态：成功" + (inc ? "\n积分：+" + inc : ""));
           } else if (code === "1102") {
-            Logger.status("🔄", "今日已签到");
-            Logger.taskSummary(1, 0, 1, 0);
-            notifyFn("成都地铁", "今日已签到", msg || "请勿重复签到！");
+            Logger.status("🔁", "今日已签到");
+            Logger.separator();
+            Logger.summary(1, 0, 1, 0, "今日已签到");
+            notifyFn("成都地铁签到", "", "状态：重复签到\n" + (msg || "请勿重复签到"));
           } else {
-            Logger.status("❌", (msg || "未知返回") + (code ? " (code=" + code + ")" : ""));
-            Logger.taskSummary(1, 0, 0, 1);
-            notifyFn("成都地铁", "返回异常", (msg || "未知返回") + (code ? " (code=" + code + ")" : ""));
+            Logger.status("❌", msg || "未知返回");
+            Logger.separator();
+            Logger.summary(1, 0, 0, 1, msg || "返回异常");
+            notifyFn("成都地铁签到", "", "状态：失败\n原因：" + (msg || "未知返回"));
           }
         } else {
           Logger.status("❌", "接口异常 " + status);
-          Logger.taskSummary(1, 0, 0, 1);
-          notifyFn("成都地铁", "接口异常 " + status, msg || body || "");
+          Logger.separator();
+          Logger.summary(1, 0, 0, 1, "接口异常");
+          notifyFn("成都地铁签到", "", "状态：失败\n原因：接口异常 " + status);
         }
-
-        Logger.scriptFinished();
         $done();
       }, function (reason) {
-        var err = reason && reason.error ? String(reason.error) : String(reason || "");
-        Logger.status("❌", "网络错误: " + err);
-        Logger.taskSummary(1, 0, 0, 1);
-        notifyFn("成都地铁", "网络错误", err);
-        Logger.scriptFinished();
+        Logger.status("❌", "网络错误");
+        Logger.separator();
+        Logger.summary(1, 0, 0, 1, "网络错误");
+        notifyFn("成都地铁签到", "", "状态：失败\n原因：网络错误");
         $done();
       });
     }

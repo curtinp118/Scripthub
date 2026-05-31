@@ -1,6 +1,6 @@
-/******************************
+/****************************** 
 脚本功能：V2EX 每日签到
-Version  : v1.1.0
+Version  : v1.2.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
@@ -49,71 +49,57 @@ var notifyFn = isQX
 
 // ========== Logger 模块 ==========
 var Logger = {
-  info: function (msg) { console.log("ℹ️ INFO    │ " + msg); },
-  success: function (msg) { console.log("✅ SUCCESS │ " + msg); },
-  warn: function (msg) { console.log("⚠️ WARN    │ " + msg); },
-  error: function (msg) { console.log("❌ ERROR   │ " + msg); },
-
-  scriptStart: function (name, version) {
+  scriptStart: function (name, version, platform, requestType) {
     var now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
     var time = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-    console.log("🚀 [" + name + "] Script Start");
-    console.log("📅 Time: " + time);
-    console.log("📦 Version: " + version);
+    console.log("🚀 Script Start");
+    console.log("Time     : " + time);
+    console.log("Version  : " + version + " | " + platform + " | " + requestType);
+    console.log("Platform : " + platform);
+    console.log("------------------------------------");
   },
 
-  envCheck: function (platform, requestType, notifyEnabled, proxyEnabled) {
-    console.log("🔍 Environment Check");
-    console.log("Platform   : " + platform);
-    console.log("Request    : " + requestType);
-    console.log("Notify     : " + (notifyEnabled ? "Enabled" : "Disabled"));
-    console.log("Proxy      : " + (proxyEnabled === null ? "N/A" : (proxyEnabled ? "Enabled" : "Disabled")));
-    console.log("");
-    console.log("✅ Environment Ready");
-  },
-
-  configLoading: function (cookieValid, tokenStatus, accountCount) {
-    console.log("📂 Config Loading");
-    var cookieIcon = cookieValid === true ? "Valid ✅" : cookieValid === false ? "Invalid ❌" : "Missing ⚠️";
-    console.log("Cookie Status  : " + cookieIcon);
-    console.log("Token Status   : " + tokenStatus);
-    console.log("Account Count  : " + accountCount);
-    console.log("");
-    console.log("✅ Config Ready");
+  envCheck: function (cookieValid, tokenStatus) {
+    console.log("📂 Environment");
+    console.log("- Cookie : " + (cookieValid ? "Valid" : "Invalid"));
+    console.log("- Token  : " + tokenStatus);
+    console.log("------------------------------------");
   },
 
   accountHeader: function (index, domain) {
-    console.log("━━━━━━━━━━━━━━━━━━");
-    if (index !== undefined && index !== null) {
-      console.log("👤 Account #" + index);
-    } else {
-      console.log("👤 Account");
-    }
-    if (domain) console.log("🌐 Domain : " + domain);
-    console.log("━━━━━━━━━━━━━━━━━━");
+    console.log("👤 Account | " + domain);
   },
 
-  status: function (icon, text) { console.log("📊 Status   : " + icon + " " + text); },
-  points: function (val) { console.log("🎯 Points   : " + val); },
-  balance: function (val) { console.log("💰 Balance  : " + val); },
-  streak: function (val) { console.log("🔥 Streak   : " + val); },
-
-  taskSummary: function (total, success, duplicate, failed) {
-    console.log("📋 Task Summary");
-    console.log("");
-    console.log("Total     : " + total);
-    console.log("Success   : " + success);
-    console.log("Duplicate : " + duplicate);
-    console.log("Failed    : " + failed);
+  field: function (label, value) {
+    var padding = "              ";
+    var key = (label + padding).substring(0, 14);
+    console.log(key + ": " + value);
   },
 
-  scriptFinished: function () { console.log("✅ Script Finished"); }
+  status: function (icon, text) { this.field("Status", icon + " " + text); },
+  points: function (val) { this.field("Points", val); },
+  daysLeft: function (val) { this.field("Days left", val); },
+  balance: function (val) { this.field("Balance", val); },
+  action: function (val) { this.field("Action", val); },
+  message: function (val) { this.field("Message", val); },
+
+  separator: function () { console.log("------------------------------------"); },
+
+  summary: function (total, success, duplicate, failed, result) {
+    console.log("📊 Summary");
+    console.log("Total      : " + total);
+    console.log("Success    : " + success);
+    console.log("Duplicate  : " + duplicate);
+    console.log("Failed     : " + failed);
+    console.log("🎯 Result  : " + result);
+    console.log("End");
+  }
 };
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "V2EX";
-var SCRIPT_VERSION = "v1.1.0";
+var SCRIPT_VERSION = "v1.2.0";
 var COOKIE_KEY = "V2EX_Cookie";
 var HOST = "www.v2ex.com";
 var isGetHeader = typeof $request !== "undefined";
@@ -142,23 +128,12 @@ function sleep(ms) {
   return new Promise(function (resolve) { setTimeout(resolve, ms); });
 }
 
-function getErrMsg(e) {
-  if (!e) return "Unknown error";
-  if (typeof e === "string") return e;
-  if (e.error) return String(e.error);
-  if (e.message) return String(e.message);
-  return String(e);
-}
-
 // ========== 存储函数 ==========
 function getStoredCookie() {
   try {
     var cookie = $store.read(COOKIE_KEY);
     return cookie ? String(cookie).trim() : "";
-  } catch (e) {
-    Logger.error("读取Cookie失败: " + e);
-    return "";
-  }
+  } catch (e) { return ""; }
 }
 
 function saveCookie(cookie) {
@@ -167,14 +142,10 @@ function saveCookie(cookie) {
     var oldCookie = getStoredCookie();
     if (oldCookie !== cookie) {
       $store.write(cookie, COOKIE_KEY);
-      Logger.success("Cookie 已更新");
       return true;
     }
     return false;
-  } catch (e) {
-    Logger.error("保存Cookie失败: " + e);
-    return false;
-  }
+  } catch (e) { return false; }
 }
 
 function buildHeaders(cookie) {
@@ -189,16 +160,6 @@ function fetchUrl(url, headers) {
   return $http.fetch({ url: url, headers: headers, method: "GET" }).then(function (resp) {
     return resp.body || "";
   });
-}
-
-function parseUsername(html) {
-  try {
-    if (!html) return "";
-    var match = html.match(/class="avatar[^"]*"\s+alt="([^"]+)"/);
-    if (match) return match[1].trim();
-    match = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
-    return match ? match[1].trim() : "";
-  } catch (e) { return ""; }
 }
 
 function formatBalance(html) {
@@ -218,10 +179,7 @@ function formatBalance(html) {
       if (type === "B") parts.push(num + " 铜币");
     }
     return parts.join(", ") || "";
-  } catch (e) {
-    Logger.error("解析余额失败: " + e);
-    return "";
-  }
+  } catch (e) { return ""; }
 }
 
 function getOnce(headers) {
@@ -251,106 +209,88 @@ function checkIn(once, headers) {
 }
 
 function doCheckin(attempt, maxRetry, headers) {
-  Logger.info("签到尝试 " + (attempt + 1) + "/" + maxRetry);
+  Logger.action("签到尝试 " + (attempt + 1) + "/" + maxRetry);
 
   return getOnce(headers).then(function (info) {
     if (!info.logged_in) {
       Logger.status("❌", "Cookie 已失效");
-      notifyFn("V2EX", "Cookie 已失效", "请重新访问 V2EX 更新 Cookie");
-      Logger.scriptFinished();
+      Logger.summary(1, 0, 0, 1, "Cookie 已失效，请重新获取");
+      notifyFn("V2EX 签到结果", "", "状态：失败\n原因：Cookie 已失效\n请重新访问 V2EX 个人主页");
       $done({});
       return;
     }
 
     if (info.already) {
       return queryBalance(headers).then(function (q) {
-        Logger.status("🔄", "今日已签到");
-        Logger.streak(info.days + " 天");
+        Logger.accountHeader(null, HOST);
+        Logger.status("🔁", "今日已签到");
+        Logger.daysLeft("连续 " + info.days + " 天");
         if (q.balance) Logger.balance(q.balance);
-
-        Logger.taskSummary(1, 0, 1, 0);
-        var n = "连续签到 " + info.days + " 天";
-        if (q.balance) n += "\n" + q.balance;
-        notifyFn("V2EX 今日已签到", "", n);
-        Logger.scriptFinished();
+        Logger.separator();
+        Logger.summary(1, 0, 1, 0, "今日已签到");
+        notifyFn("V2EX 签到结果", "", "状态：重复签到\n连续签到：" + info.days + " 天" + (q.balance ? "\n余额：" + q.balance : ""));
         $done({});
       });
     }
 
     if (!info.once) {
-      Logger.warn("未找到 once 码");
       if (attempt + 1 < maxRetry) {
-        Logger.info("3s 后重试...");
         return sleep(3000).then(function () { return doCheckin(attempt + 1, maxRetry, headers); });
       }
-      Logger.taskSummary(1, 0, 0, 1);
-      notifyFn("V2EX 签到失败", "未找到 once 码", "已达最大重试次数");
-      Logger.scriptFinished();
+      Logger.summary(1, 0, 0, 1, "未找到 once 码");
+      notifyFn("V2EX 签到结果", "", "状态：失败\n原因：未找到 once 码");
       $done({});
       return;
     }
 
-    Logger.info("once=" + info.once + " | 连续 " + info.days + " 天");
     return checkIn(info.once, headers).then(function () {
       return queryBalance(headers);
     }).then(function (q) {
+      Logger.accountHeader(null, HOST);
       Logger.status("✅", "签到成功");
-      Logger.streak(info.days + " 天");
+      Logger.daysLeft("连续 " + info.days + " 天");
       if (q.balance) Logger.balance(q.balance);
-
-      Logger.taskSummary(1, 1, 0, 0);
-      var n = "连续签到 " + info.days + " 天";
-      if (q.balance) n += "\n" + q.balance;
-      notifyFn("V2EX 签到成功", "", n);
-      Logger.scriptFinished();
+      Logger.separator();
+      Logger.summary(1, 1, 0, 0, "签到成功");
+      notifyFn("V2EX 签到结果", "", "状态：成功\n连续签到：" + info.days + " 天" + (q.balance ? "\n余额：" + q.balance : ""));
       $done({});
     });
   }).catch(function (e) {
-    Logger.error("网络错误: " + getErrMsg(e));
     if (attempt + 1 < maxRetry) {
-      Logger.info("3s 后重试...");
       return sleep(3000).then(function () { return doCheckin(attempt + 1, maxRetry, headers); });
     }
-    Logger.taskSummary(1, 0, 0, 1);
-    notifyFn("V2EX 网络错误", "", getErrMsg(e));
-    Logger.scriptFinished();
+    Logger.status("❌", "网络错误");
+    Logger.summary(1, 0, 0, 1, "网络错误");
+    notifyFn("V2EX 签到结果", "", "状态：失败\n原因：网络错误");
     $done({});
   });
 }
 
 // ========== 主流程 ==========
 if (isGetHeader) {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Manual");
 
   var allHeaders = $request.headers || {};
   var cookie = allHeaders.Cookie || allHeaders.cookie || "";
 
   if (!cookie) {
-    Logger.error("Cookie 未获取到");
+    Logger.status("⚠️", "Cookie 未获取到");
   } else {
     var saved = saveCookie(cookie);
-    if (saved) {
-      Logger.success("Cookie 已捕获");
-      notifyFn("V2EX", "Cookie 已更新", "后续将用于自动签到");
-    }
+    Logger.status("✅", saved ? "Cookie 已更新" : "Cookie 未变化");
   }
-  Logger.scriptFinished();
   $done({});
 } else {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
-  Logger.envCheck(getPlatform(), "Cron", true, null);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Cron");
 
   var storedCookie = getStoredCookie();
   if (!storedCookie) {
-    Logger.configLoading(false, "Missing", 0);
-    Logger.error("未找到 Cookie");
-    notifyFn("V2EX", "未获取到 Cookie", "请先访问 V2EX 个人主页");
-    Logger.scriptFinished();
+    Logger.envCheck(false, "Missing");
+    Logger.status("⚠️", "无 Cookie");
+    notifyFn("V2EX 签到", "", "状态：失败\n原因：未获取到 Cookie\n请先访问 V2EX 个人主页");
     $done({});
   } else {
-    Logger.configLoading(true, "Found", 1);
-    Logger.accountHeader(null, HOST);
-
+    Logger.envCheck(true, "Found");
     var headers = buildHeaders(storedCookie);
     doCheckin(0, 3, headers);
   }

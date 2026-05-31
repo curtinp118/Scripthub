@@ -1,6 +1,6 @@
-/******************************
+/****************************** 
 脚本功能：中国移动 自动签到领奖
-Version  : v1.1.0
+Version  : v1.2.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
@@ -49,70 +49,55 @@ var notifyFn = isQX
 
 // ========== Logger 模块 ==========
 var Logger = {
-  info: function (msg) { console.log("ℹ️ INFO    │ " + msg); },
-  success: function (msg) { console.log("✅ SUCCESS │ " + msg); },
-  warn: function (msg) { console.log("⚠️ WARN    │ " + msg); },
-  error: function (msg) { console.log("❌ ERROR   │ " + msg); },
-  debug: function (msg) { console.log("🐛 DEBUG   │ " + msg); },
-
-  scriptStart: function (name, version) {
+  scriptStart: function (name, version, platform, requestType) {
     var now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
     var time = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-    console.log("🚀 [" + name + "] Script Start");
-    console.log("📅 Time: " + time);
-    console.log("📦 Version: " + version);
+    console.log("🚀 Script Start");
+    console.log("Time     : " + time);
+    console.log("Version  : " + version + " | " + platform + " | " + requestType);
+    console.log("Platform : " + platform);
+    console.log("------------------------------------");
   },
 
-  envCheck: function (platform, requestType, notifyEnabled, proxyEnabled) {
-    console.log("🔍 Environment Check");
-    console.log("Platform   : " + platform);
-    console.log("Request    : " + requestType);
-    console.log("Notify     : " + (notifyEnabled ? "Enabled" : "Disabled"));
-    console.log("Proxy      : " + (proxyEnabled === null ? "N/A" : (proxyEnabled ? "Enabled" : "Disabled")));
-    console.log("");
-    console.log("✅ Environment Ready");
-  },
-
-  configLoading: function (cookieValid, tokenStatus, accountCount) {
-    console.log("📂 Config Loading");
-    var cookieIcon = cookieValid === true ? "Valid ✅" : cookieValid === false ? "Invalid ❌" : "Missing ⚠️";
-    console.log("Cookie Status  : " + cookieIcon);
-    console.log("Token Status   : " + tokenStatus);
-    console.log("Account Count  : " + accountCount);
-    console.log("");
-    console.log("✅ Config Ready");
+  envCheck: function (cookieValid, tokenStatus) {
+    console.log("📂 Environment");
+    console.log("- Cookie : " + (cookieValid ? "Valid" : "Invalid"));
+    console.log("- Token  : " + tokenStatus);
+    console.log("------------------------------------");
   },
 
   accountHeader: function (index, domain) {
-    console.log("━━━━━━━━━━━━━━━━━━");
-    if (index !== undefined && index !== null) {
-      console.log("👤 Account #" + index);
-    } else {
-      console.log("👤 Account");
-    }
-    if (domain) console.log("🌐 Domain : " + domain);
-    console.log("━━━━━━━━━━━━━━━━━━");
+    console.log("👤 Account | " + domain);
   },
 
-  status: function (icon, text) { console.log("📊 Status   : " + icon + " " + text); },
-  points: function (val) { console.log("🎯 Points   : " + val); },
-
-  taskSummary: function (total, success, duplicate, failed) {
-    console.log("📋 Task Summary");
-    console.log("");
-    console.log("Total     : " + total);
-    console.log("Success   : " + success);
-    console.log("Duplicate : " + duplicate);
-    console.log("Failed    : " + failed);
+  field: function (label, value) {
+    var padding = "              ";
+    var key = (label + padding).substring(0, 14);
+    console.log(key + ": " + value);
   },
 
-  scriptFinished: function () { console.log("✅ Script Finished"); }
+  status: function (icon, text) { this.field("Status", icon + " " + text); },
+  points: function (val) { this.field("Points", val); },
+  action: function (val) { this.field("Action", val); },
+  message: function (val) { this.field("Message", val); },
+
+  separator: function () { console.log("------------------------------------"); },
+
+  summary: function (total, success, duplicate, failed, result) {
+    console.log("📊 Summary");
+    console.log("Total      : " + total);
+    console.log("Success    : " + success);
+    console.log("Duplicate  : " + duplicate);
+    console.log("Failed     : " + failed);
+    console.log("🎯 Result  : " + result);
+    console.log("End");
+  }
 };
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "CMCC";
-var SCRIPT_VERSION = "v1.1.0";
+var SCRIPT_VERSION = "v1.2.0";
 var COOKIE_KEY = "CMCC_Cookie";
 var HOST = "wx.10086.cn";
 var BASE_URL = "https://wx.10086.cn/qwhdhub/api/mark/mark31";
@@ -137,15 +122,11 @@ function getDateString() {
   return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
 }
 
-// ========== 存储函数 ==========
 function getStoredCookie() {
   try {
     var cookie = $store.read(COOKIE_KEY);
     return cookie ? String(cookie).trim() : "";
-  } catch (e) {
-    Logger.error("读取Cookie失败: " + e);
-    return "";
-  }
+  } catch (e) { return ""; }
 }
 
 function saveCookie(cookie) {
@@ -154,17 +135,12 @@ function saveCookie(cookie) {
     var oldCookie = getStoredCookie();
     if (oldCookie !== cookie) {
       $store.write(cookie, COOKIE_KEY);
-      Logger.success("Cookie 已更新");
       return true;
     }
     return false;
-  } catch (e) {
-    Logger.error("保存Cookie失败: " + e);
-    return false;
-  }
+  } catch (e) { return false; }
 }
 
-// ========== 网络请求 ==========
 function fetchUrl(url, options) {
   var opts = {
     url: url,
@@ -177,76 +153,59 @@ function fetchUrl(url, options) {
 
 function makeHeaders(cookie) {
   return {
-    Host: HOST,
-    Accept: "*/*",
-    "Content-Type": "application/json;charset=UTF-8",
-    Origin: "https://" + HOST,
-    Referer: REFERER,
-    "login-check": "1",
-    "x-requested-with": "XMLHttpRequest",
-    "User-Agent": USER_AGENT,
-    Cookie: cookie
+    Host: HOST, Accept: "*/*", "Content-Type": "application/json;charset=UTF-8",
+    Origin: "https://" + HOST, Referer: REFERER, "login-check": "1",
+    "x-requested-with": "XMLHttpRequest", "User-Agent": USER_AGENT, Cookie: cookie
   };
 }
 
 // ========== 主流程 ==========
 if (isGetHeader) {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Manual");
 
   var allHeaders = $request.headers || {};
   var cookie = allHeaders.Cookie || allHeaders.cookie || "";
 
   if (!cookie) {
-    Logger.error("Cookie 未获取到");
+    Logger.status("⚠️", "Cookie 未获取到");
   } else {
     var saved = saveCookie(cookie);
-    if (saved) {
-      Logger.success("Cookie 已捕获");
-      notifyFn("中国移动", "Cookie 已更新", "后续将用于自动签到领奖");
-    }
+    Logger.status("✅", saved ? "Cookie 已更新" : "Cookie 未变化");
   }
-  Logger.scriptFinished();
   $done({});
 } else {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
-  Logger.envCheck(getPlatform(), "Cron", true, null);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Cron");
 
   var storedCookie = getStoredCookie();
   if (!storedCookie) {
-    Logger.configLoading(false, "Missing", 0);
-    Logger.error("未找到 Cookie");
-    notifyFn("中国移动", "未获取到 Cookie", "请先打开移动 App 进入签到页面");
-    Logger.scriptFinished();
+    Logger.envCheck(false, "Missing");
+    Logger.status("⚠️", "无 Cookie");
+    notifyFn("中国移动签到", "", "状态：失败\n原因：未获取到 Cookie");
     $done();
   } else {
-    Logger.configLoading(true, "Found", 1);
+    Logger.envCheck(true, "Found");
     Logger.accountHeader(null, HOST);
 
     var headers = makeHeaders(storedCookie);
     var today = getDateString();
-
-    Logger.info("执行签到: " + today);
+    Logger.action("签到: " + today);
 
     fetchUrl(BASE_URL + "/domark", {
-      method: "POST",
-      headers: headers,
-      body: JSON.stringify({ date: today })
+      method: "POST", headers: headers, body: JSON.stringify({ date: today })
     }).then(function (signInResp) {
       var signInData = safeJsonParse(signInResp);
       if (!signInData) {
         Logger.status("❌", "响应解析错误");
-        Logger.taskSummary(1, 0, 0, 1);
-        notifyFn("中国移动签到失败", "响应解析错误", "");
-        Logger.scriptFinished();
+        Logger.summary(1, 0, 0, 1, "响应解析错误");
+        notifyFn("中国移动签到", "", "状态：失败\n原因：响应解析错误");
         $done();
         return;
       }
 
       if (!signInData.success && signInData.code !== "SUCCESS") {
         Logger.status("❌", signInData.msg || signInData.code);
-        Logger.taskSummary(1, 0, 0, 1);
-        notifyFn("中国移动签到失败", signInData.msg || signInData.code || "", "");
-        Logger.scriptFinished();
+        Logger.summary(1, 0, 0, 1, signInData.msg || "签到失败");
+        notifyFn("中国移动签到", "", "状态：失败\n原因：" + (signInData.msg || signInData.code));
         $done();
         return;
       }
@@ -255,41 +214,39 @@ if (isGetHeader) {
 
       if (awards.length > 0) {
         var awardId = awards[0].id;
-        Logger.info("发现奖励，领取中... ID: " + awardId);
+        Logger.action("领取奖励 ID: " + awardId);
 
         fetchUrl(BASE_URL + "/taskAward/" + awardId, {
-          method: "POST",
-          headers: headers,
-          body: "{}"
+          method: "POST", headers: headers, body: "{}"
         }).then(function (awardResp) {
           var awardData = safeJsonParse(awardResp);
           if (awardData && awardData.success) {
             var prize = (awardData.data && awardData.data.prizeName) || "奖励已领取";
             Logger.status("✅", "签到+领奖成功");
             Logger.points(prize);
-            Logger.taskSummary(1, 1, 0, 0);
-            notifyFn("中国移动签到+领奖成功", "", prize);
+            Logger.separator();
+            Logger.summary(1, 1, 0, 0, "签到+领奖成功");
+            notifyFn("中国移动签到", "", "状态：成功\n奖励：" + prize);
           } else {
             Logger.status("✅", "签到成功，领奖失败");
-            Logger.taskSummary(1, 1, 0, 0);
-            notifyFn("中国移动签到成功", "领奖失败", "");
+            Logger.separator();
+            Logger.summary(1, 1, 0, 0, "签到成功");
+            notifyFn("中国移动签到", "", "状态：成功（领奖失败）");
           }
-          Logger.scriptFinished();
           $done();
         });
       } else {
-        Logger.status("✅", "签到成功 | 无可领取奖励");
-        Logger.taskSummary(1, 1, 0, 0);
-        notifyFn("中国移动签到成功", "", signInData.msg || "已签到");
-        Logger.scriptFinished();
+        Logger.status("✅", "签到成功");
+        Logger.action("无可领取奖励");
+        Logger.separator();
+        Logger.summary(1, 1, 0, 0, "签到成功");
+        notifyFn("中国移动签到", "", "状态：成功\n" + (signInData.msg || "已签到"));
         $done();
       }
     }).catch(function (e) {
-      var errMsg = e && e.error ? String(e.error) : String(e && e.message ? e.message : e || "Unknown error");
-      Logger.status("❌", "网络错误: " + errMsg);
-      Logger.taskSummary(1, 0, 0, 1);
-      notifyFn("中国移动网络错误", "", errMsg);
-      Logger.scriptFinished();
+      Logger.status("❌", "网络错误");
+      Logger.summary(1, 0, 0, 1, "网络错误");
+      notifyFn("中国移动签到", "", "状态：失败\n原因：网络错误");
       $done();
     });
   }

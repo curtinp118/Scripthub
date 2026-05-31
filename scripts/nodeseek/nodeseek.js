@@ -1,6 +1,6 @@
-/******************************
+/****************************** 
 脚本功能：NodeSeek 论坛签到
-Version  : v1.1.0
+Version  : v1.2.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
@@ -49,68 +49,54 @@ var notifyFn = isQX
 
 // ========== Logger 模块 ==========
 var Logger = {
-  info: function (msg) { console.log("ℹ️ INFO    │ " + msg); },
-  success: function (msg) { console.log("✅ SUCCESS │ " + msg); },
-  warn: function (msg) { console.log("⚠️ WARN    │ " + msg); },
-  error: function (msg) { console.log("❌ ERROR   │ " + msg); },
-
-  scriptStart: function (name, version) {
+  scriptStart: function (name, version, platform, requestType) {
     var now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
     var time = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-    console.log("🚀 [" + name + "] Script Start");
-    console.log("📅 Time: " + time);
-    console.log("📦 Version: " + version);
+    console.log("🚀 Script Start");
+    console.log("Time     : " + time);
+    console.log("Version  : " + version + " | " + platform + " | " + requestType);
+    console.log("Platform : " + platform);
+    console.log("------------------------------------");
   },
 
-  envCheck: function (platform, requestType, notifyEnabled, proxyEnabled) {
-    console.log("🔍 Environment Check");
-    console.log("Platform   : " + platform);
-    console.log("Request    : " + requestType);
-    console.log("Notify     : " + (notifyEnabled ? "Enabled" : "Disabled"));
-    console.log("Proxy      : " + (proxyEnabled === null ? "N/A" : (proxyEnabled ? "Enabled" : "Disabled")));
-    console.log("");
-    console.log("✅ Environment Ready");
-  },
-
-  configLoading: function (cookieValid, tokenStatus, accountCount) {
-    console.log("📂 Config Loading");
-    var cookieIcon = cookieValid === true ? "Valid ✅" : cookieValid === false ? "Invalid ❌" : "Missing ⚠️";
-    console.log("Cookie Status  : " + cookieIcon);
-    console.log("Token Status   : " + tokenStatus);
-    console.log("Account Count  : " + accountCount);
-    console.log("");
-    console.log("✅ Config Ready");
+  envCheck: function (cookieValid, tokenStatus) {
+    console.log("📂 Environment");
+    console.log("- Cookie : " + (cookieValid ? "Valid" : "Invalid"));
+    console.log("- Token  : " + tokenStatus);
+    console.log("------------------------------------");
   },
 
   accountHeader: function (index, domain) {
-    console.log("━━━━━━━━━━━━━━━━━━");
-    if (index !== undefined && index !== null) {
-      console.log("👤 Account #" + index);
-    } else {
-      console.log("👤 Account");
-    }
-    if (domain) console.log("🌐 Domain : " + domain);
-    console.log("━━━━━━━━━━━━━━━━━━");
+    console.log("👤 Account | " + domain);
   },
 
-  status: function (icon, text) { console.log("📊 Status   : " + icon + " " + text); },
-
-  taskSummary: function (total, success, duplicate, failed) {
-    console.log("📋 Task Summary");
-    console.log("");
-    console.log("Total     : " + total);
-    console.log("Success   : " + success);
-    console.log("Duplicate : " + duplicate);
-    console.log("Failed    : " + failed);
+  field: function (label, value) {
+    var padding = "              ";
+    var key = (label + padding).substring(0, 14);
+    console.log(key + ": " + value);
   },
 
-  scriptFinished: function () { console.log("✅ Script Finished"); }
+  status: function (icon, text) { this.field("Status", icon + " " + text); },
+  action: function (val) { this.field("Action", val); },
+  message: function (val) { this.field("Message", val); },
+
+  separator: function () { console.log("------------------------------------"); },
+
+  summary: function (total, success, duplicate, failed, result) {
+    console.log("📊 Summary");
+    console.log("Total      : " + total);
+    console.log("Success    : " + success);
+    console.log("Duplicate  : " + duplicate);
+    console.log("Failed     : " + failed);
+    console.log("🎯 Result  : " + result);
+    console.log("End");
+  }
 };
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "NodeSeek";
-var SCRIPT_VERSION = "v1.1.0";
+var SCRIPT_VERSION = "v1.2.0";
 var NS_HEADER_KEY = "NS_NodeseekHeaders";
 var isGetHeader = typeof $request !== "undefined";
 
@@ -145,46 +131,42 @@ function pickNeedHeaders(src) {
 
 // ========== 主流程 ==========
 if (isGetHeader) {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Manual");
 
   var allHeaders = $request.headers || {};
   var picked = pickNeedHeaders(allHeaders);
 
   if (!picked || Object.keys(picked).length === 0) {
-    Logger.error("未抓到请求头");
-    notifyFn("NS Headers 获取失败", "", "未获取到指定请求头，请重新再试一次");
+    Logger.status("⚠️", "未抓到请求头");
+    notifyFn("NS 抓包", "", "状态：失败\n未获取到请求头");
     $done({});
   } else {
     var ok = $store.write(JSON.stringify(picked), NS_HEADER_KEY);
-    Logger.success("已保存请求头 (" + Object.keys(picked).length + " 个字段)");
-    notifyFn(ok ? "NS Headers 获取成功" : "NS Headers 保存失败", "", ok ? "指定请求头已持久化保存" : "写入持久化存储失败");
-    Logger.scriptFinished();
+    Logger.status("✅", ok ? "请求头已保存" : "保存失败");
+    Logger.field("Fields", Object.keys(picked).length);
+    notifyFn("NS 抓包", "", ok ? "状态：成功" : "状态：失败");
     $done({});
   }
 } else {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
-  Logger.envCheck(getPlatform(), "Cron", true, null);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Cron");
 
   var raw = $store.read(NS_HEADER_KEY);
   if (!raw) {
-    Logger.configLoading(false, "Missing", 0);
-    Logger.error("缺少请求头，请先抓包");
-    notifyFn("NS签到结果", "无法签到", "本地没有已保存的请求头，请先访问一次个人页面");
-    Logger.scriptFinished();
+    Logger.envCheck(false, "Missing");
+    Logger.status("⚠️", "缺少请求头");
+    notifyFn("NS签到", "", "状态：失败\n原因：缺少请求头，请先抓包");
     $done();
   } else {
     var parsed = safeJsonParse(raw);
     var savedHeaders = parsed[0];
-    var savedHeadersErr = parsed[1];
 
-    if (savedHeadersErr || !savedHeaders) {
-      Logger.configLoading(false, "Invalid", 0);
-      Logger.error("请求头解析失败: " + savedHeadersErr);
-      notifyFn("NS签到结果", "无法签到", "请求头数据损坏，请重新访问个人页面");
-      Logger.scriptFinished();
+    if (!savedHeaders) {
+      Logger.envCheck(false, "Invalid");
+      Logger.status("⚠️", "请求头解析失败");
+      notifyFn("NS签到", "", "状态：失败\n原因：请求头数据损坏");
       $done();
     } else {
-      Logger.configLoading(true, "Found", 1);
+      Logger.envCheck(true, "Found");
       Logger.accountHeader(null, "www.nodeseek.com");
 
       var headers = {
@@ -194,58 +176,54 @@ if (isGetHeader) {
         "Content-Type": savedHeaders["Content-Type"] || "text/plain;charset=UTF-8",
         Origin: savedHeaders["Origin"] || "https://www.nodeseek.com",
         "refract-sign": savedHeaders["refract-sign"] || "",
-        "User-Agent": savedHeaders["User-Agent"] || "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.2 Mobile/15E148 Safari/604.1",
+        "User-Agent": savedHeaders["User-Agent"] || "Mozilla/5.0",
         "refract-key": savedHeaders["refract-key"] || "",
         "Sec-Fetch-Mode": savedHeaders["Sec-Fetch-Mode"] || "cors",
         Cookie: savedHeaders["Cookie"] || "",
         Host: savedHeaders["Host"] || "www.nodeseek.com",
-        Referer: savedHeaders["Referer"] || "https://www.nodeseek.com/sw.js?v=0.3.33",
+        Referer: savedHeaders["Referer"] || "https://www.nodeseek.com/",
         "Accept-Language": savedHeaders["Accept-Language"] || "zh-CN,zh-Hans;q=0.9",
         Accept: savedHeaders["Accept"] || "*/*"
       };
 
       $http.fetch({
         url: "https://www.nodeseek.com/api/attendance?random=true",
-        method: "POST",
-        headers: headers,
-        body: ""
+        method: "POST", headers: headers, body: ""
       }).then(function (resp) {
         var status = resp.statusCode;
         var body = resp.body || "";
         var msg = "";
-        var parsed = safeJsonParse(body);
-        var obj = parsed[0];
-
-        if (obj) {
-          msg = obj.message ? String(obj.message) : "";
-        }
+        var p = safeJsonParse(body);
+        if (p[0]) msg = p[0].message ? String(p[0].message) : "";
 
         if (status === 403) {
           Logger.status("⚠️", "403 风控");
-          Logger.taskSummary(1, 0, 0, 1);
-          notifyFn("NS签到结果", "403 风控", "暂时被风控，稍后再试" + (msg ? "\n内容: " + msg : ""));
+          Logger.separator();
+          Logger.summary(1, 0, 0, 1, "被风控");
+          notifyFn("NS签到", "", "状态：失败\n原因：403 风控，稍后重试");
         } else if (status === 500) {
           Logger.status("❌", "500 服务器错误");
-          Logger.taskSummary(1, 0, 0, 1);
-          notifyFn("NS签到结果", "500 服务器错误", msg || body || "无返回内容");
+          Logger.separator();
+          Logger.summary(1, 0, 0, 1, "服务器错误");
+          notifyFn("NS签到", "", "状态：失败\n原因：500 服务器错误");
         } else if (status >= 200 && status < 300) {
           Logger.status("✅", "签到成功");
-          Logger.taskSummary(1, 1, 0, 0);
-          notifyFn("NS签到结果", "签到成功", msg || "签到成功");
+          if (msg) Logger.message(msg);
+          Logger.separator();
+          Logger.summary(1, 1, 0, 0, "签到成功");
+          notifyFn("NS签到", "", "状态：成功" + (msg ? "\n" + msg : ""));
         } else {
           Logger.status("❌", "请求异常 " + status);
-          Logger.taskSummary(1, 0, 0, 1);
-          notifyFn("NS签到结果", "请求异常 " + status, msg || body || "");
+          Logger.separator();
+          Logger.summary(1, 0, 0, 1, "请求异常");
+          notifyFn("NS签到", "", "状态：失败\n原因：请求异常 " + status);
         }
-
-        Logger.scriptFinished();
         $done();
       }, function (reason) {
-        var err = reason && reason.error ? String(reason.error) : String(reason || "");
-        Logger.status("❌", "网络错误: " + err);
-        Logger.taskSummary(1, 0, 0, 1);
-        notifyFn("NS签到结果", "请求错误", err);
-        Logger.scriptFinished();
+        Logger.status("❌", "网络错误");
+        Logger.separator();
+        Logger.summary(1, 0, 0, 1, "网络错误");
+        notifyFn("NS签到", "", "状态：失败\n原因：网络错误");
         $done();
       });
     }

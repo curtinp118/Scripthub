@@ -1,12 +1,13 @@
-/******************************
+/****************************** 
 脚本功能：GLaDOS / Railgun 自动签到 + 积分兑换（多账号版）
-Version  : v1.1.0
+Version  : v1.2.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
 使用说明：
-访问 GLaDOS 任意域名的 /console/account 页面抓包保存 Cookie，定时任务自动签到。支持 glados.network、railgun.info、glados.vip、glados.one、glados.space，各域名支持多账号。
+访问 GLaDOS 任意域名的 /console/account 页面抓包保存 Cookie，定时任务自动签到。
+支持 glados.network、railgun.info、glados.vip、glados.one、glados.space，各域名支持多账号。
 
 [rewrite_local]
 ^https://glados\.network/console/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
@@ -53,74 +54,63 @@ var notifyFn = isQX
 
 // ========== Logger 模块 ==========
 var Logger = {
-  info: function (msg) { console.log("ℹ️ INFO    │ " + msg); },
-  success: function (msg) { console.log("✅ SUCCESS │ " + msg); },
-  warn: function (msg) { console.log("⚠️ WARN    │ " + msg); },
-  error: function (msg) { console.log("❌ ERROR   │ " + msg); },
-
-  scriptStart: function (name, version) {
+  scriptStart: function (name, version, platform, requestType) {
     var now = new Date();
     var pad = function (n) { return String(n).padStart(2, "0"); };
     var time = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
-    console.log("🚀 [" + name + "] Script Start");
-    console.log("📅 Time: " + time);
-    console.log("📦 Version: " + version);
+    console.log("🚀 Script Start");
+    console.log("Time     : " + time);
+    console.log("Version  : " + version + " | " + platform + " | " + requestType);
+    console.log("Platform : " + platform);
+    console.log("------------------------------------");
   },
 
-  envCheck: function (platform, requestType, notifyEnabled, proxyEnabled) {
-    console.log("🔍 Environment Check");
-    console.log("Platform   : " + platform);
-    console.log("Request    : " + requestType);
-    console.log("Notify     : " + (notifyEnabled ? "Enabled" : "Disabled"));
-    console.log("Proxy      : " + (proxyEnabled === null ? "N/A" : (proxyEnabled ? "Enabled" : "Disabled")));
-    console.log("");
-    console.log("✅ Environment Ready");
-  },
-
-  configLoading: function (cookieValid, tokenStatus, accountCount) {
-    console.log("📂 Config Loading");
-    var cookieIcon = cookieValid === true ? "Valid ✅" : cookieValid === false ? "Invalid ❌" : "Missing ⚠️";
-    console.log("Cookie Status  : " + cookieIcon);
-    console.log("Token Status   : " + tokenStatus);
-    console.log("Account Count  : " + accountCount);
-    console.log("");
-    console.log("✅ Config Ready");
+  envCheck: function (cookieValid, tokenStatus) {
+    console.log("📂 Environment");
+    console.log("- Cookie : " + (cookieValid ? "Valid" : "Invalid"));
+    console.log("- Token  : " + tokenStatus);
+    console.log("------------------------------------");
   },
 
   accountHeader: function (index, domain) {
-    console.log("━━━━━━━━━━━━━━━━━━");
     if (index !== undefined && index !== null) {
-      console.log("👤 Account #" + index);
+      console.log("👤 Account #" + index + " | " + domain);
     } else {
-      console.log("👤 Account");
+      console.log("👤 Account | " + domain);
     }
-    if (domain) console.log("🌐 Domain : " + domain);
-    console.log("━━━━━━━━━━━━━━━━━━");
   },
 
-  status: function (icon, text) { console.log("📊 Status   : " + icon + " " + text); },
-  points: function (val) { console.log("🎯 Points   : " + val); },
-  balance: function (val) { console.log("💰 Balance  : " + val); },
-  streak: function (val) { console.log("🔥 Streak   : " + val); },
-
-  taskSummary: function (total, success, duplicate, failed) {
-    console.log("📋 Task Summary");
-    console.log("");
-    console.log("Total     : " + total);
-    console.log("Success   : " + success);
-    console.log("Duplicate : " + duplicate);
-    console.log("Failed    : " + failed);
+  field: function (label, value) {
+    var padding = "              ";
+    var key = (label + padding).substring(0, 14);
+    console.log(key + ": " + value);
   },
 
-  scriptFinished: function () { console.log("✅ Script Finished"); }
+  status: function (icon, text) { this.field("Status", icon + " " + text); },
+  points: function (val) { this.field("Points", val); },
+  daysLeft: function (val) { this.field("Days left", val); },
+  balance: function (val) { this.field("Balance", val); },
+  action: function (val) { this.field("Action", val); },
+  message: function (val) { this.field("Message", val); },
+
+  separator: function () { console.log("------------------------------------"); },
+
+  summary: function (total, success, duplicate, failed, result) {
+    console.log("📊 Summary");
+    console.log("Total      : " + total);
+    console.log("Success    : " + success);
+    console.log("Duplicate  : " + duplicate);
+    console.log("Failed     : " + failed);
+    console.log("🎯 Result  : " + result);
+    console.log("End");
+  }
 };
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "GLaDOS";
-var SCRIPT_VERSION = "v1.1.0";
+var SCRIPT_VERSION = "v1.2.0";
 var COOKIES_KEY_PREFIX = "GLaDOS_Cookies";
 var DOMAINS_LIST_KEY = "GLaDOS_Domains";
-var DOMAINS = ["glados.network", "railgun.info", "glados.vip", "glados.one", "glados.space"];
 var EXCHANGE_PLAN = "plan500";
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 var isGetHeader = typeof $request !== "undefined";
@@ -147,10 +137,7 @@ function getSavedDomains() {
     if (!raw) return [];
     var list = safeJsonParse(raw) || [];
     return Array.isArray(list) ? list.filter(Boolean) : [];
-  } catch (e) {
-    Logger.error("读取域名列表失败: " + e);
-    return [];
-  }
+  } catch (e) { return []; }
 }
 
 function addDomain(domain) {
@@ -160,9 +147,7 @@ function addDomain(domain) {
       list.push(domain);
       $store.write(JSON.stringify(list), DOMAINS_LIST_KEY);
     }
-  } catch (e) {
-    Logger.error("保存域名失败: " + e);
-  }
+  } catch (e) {}
 }
 
 function getCookiesForDomain(domain) {
@@ -171,10 +156,7 @@ function getCookiesForDomain(domain) {
     if (!raw) return [];
     var list = safeJsonParse(raw);
     return Array.isArray(list) ? list.filter(Boolean) : [];
-  } catch (e) {
-    Logger.error("读取Cookie失败: " + e);
-    return [];
-  }
+  } catch (e) { return []; }
 }
 
 function saveCookie(domain, cookie) {
@@ -187,10 +169,7 @@ function saveCookie(domain, cookie) {
     $store.write(JSON.stringify(cookies), cookiesKeyFor(domain));
     addDomain(domain);
     return { isNew: true, index: cookies.length - 1 };
-  } catch (e) {
-    Logger.error("保存Cookie失败: " + e);
-    return { isNew: false, index: -1 };
-  }
+  } catch (e) { return { isNew: false, index: -1 }; }
 }
 
 function getHostFromRequest() {
@@ -225,44 +204,25 @@ function request(url, method, cookie, domain, body) {
 
 // ========== API ==========
 function checkin(cookie, domain) {
-  var url = "https://" + domain + "/api/user/checkin";
-  return request(url, "POST", cookie, domain, { token: domain }).then(function (resp) {
-    if (resp.error) {
-      Logger.error("签到网络错误 [" + domain + "]: " + resp.error);
-      return { status: "签到失败", code: -2, message: resp.error, points: "0" };
-    }
-    if (!resp.data) {
-      Logger.error("签到响应解析失败 [" + domain + "]: " + resp.raw);
-      return { status: "签到失败", code: -2, message: resp.raw, points: "0" };
-    }
+  return request("https://" + domain + "/api/user/checkin", "POST", cookie, domain, { token: domain }).then(function (resp) {
+    if (resp.error) return { status: "签到失败", code: -2, message: resp.error, points: "0" };
+    if (!resp.data) return { status: "签到失败", code: -2, message: resp.raw, points: "0" };
     var data = resp.data;
     var code = data.code !== undefined ? data.code : -2;
     var message = data.message || "";
     var points = String(data.points !== undefined ? data.points : 0);
-    if (code === 0) {
-      Logger.success("签到成功 [" + domain + "]: +" + points + " 积分, " + message);
-      return { status: "签到成功", code: 0, message: message, points: points };
-    } else if (code === 1) {
-      Logger.warn("重复签到 [" + domain + "]: " + message);
-      return { status: "重复签到", code: 1, message: message, points: "0" };
-    } else {
-      Logger.error("签到失败 [" + domain + "]: code=" + code + ", " + message);
-      return { status: "签到失败", code: code, message: message, points: "0" };
-    }
+    if (code === 0) return { status: "签到成功", code: 0, message: message, points: points };
+    if (code === 1) return { status: "重复签到", code: 1, message: message, points: "0" };
+    return { status: "签到失败", code: code, message: message, points: "0" };
   });
 }
 
 function getStatus(cookie, domain) {
   return request("https://" + domain + "/api/user/status", "GET", cookie, domain).then(function (resp) {
-    if (resp.error || !resp.data) {
-      Logger.error("查询状态失败 [" + domain + "]: " + (resp.error || resp.raw));
-      return { leftDays: "N/A" };
-    }
+    if (resp.error || !resp.data) return { leftDays: "N/A" };
     var leftDays = resp.data.data && resp.data.data.leftDays;
     if (leftDays !== undefined && leftDays !== null) {
-      var days = parseInt(parseFloat(leftDays), 10);
-      Logger.info("剩余天数 [" + domain + "]: " + days + " 天");
-      return { leftDays: days + " 天" };
+      return { leftDays: parseInt(parseFloat(leftDays), 10) + " 天" };
     }
     return { leftDays: "N/A" };
   });
@@ -270,14 +230,10 @@ function getStatus(cookie, domain) {
 
 function getPoints(cookie, domain) {
   return request("https://" + domain + "/api/user/points", "GET", cookie, domain).then(function (resp) {
-    if (resp.error || !resp.data) {
-      Logger.error("查询积分失败 [" + domain + "]: " + (resp.error || resp.raw));
-      return { points: "N/A", pointsNum: 0 };
-    }
+    if (resp.error || !resp.data) return { points: "N/A", pointsNum: 0 };
     var points = resp.data.points;
     if (points !== undefined && points !== null) {
       var pointsInt = parseInt(parseFloat(points), 10);
-      Logger.info("总积分 [" + domain + "]: " + pointsInt);
       return { points: "" + pointsInt, pointsNum: pointsInt };
     }
     return { points: "N/A", pointsNum: 0 };
@@ -286,19 +242,11 @@ function getPoints(cookie, domain) {
 
 function exchange(cookie, domain, plan) {
   return request("https://" + domain + "/api/user/exchange", "POST", cookie, domain, { planType: plan }).then(function (resp) {
-    if (resp.error || !resp.data) {
-      Logger.error("兑换失败 [" + domain + "]: " + (resp.error || resp.raw));
-      return "兑换失败: " + (resp.error || resp.raw);
-    }
+    if (resp.error || !resp.data) return "兑换失败";
     var code = resp.data.code !== undefined ? resp.data.code : -2;
     var message = resp.data.message || "";
-    if (code === 0) {
-      Logger.success("兑换成功 [" + domain + "]: " + plan + ", " + message);
-      return "兑换成功(" + plan + ")";
-    } else {
-      Logger.error("兑换失败 [" + domain + "]: code=" + code + ", " + message);
-      return "兑换失败: " + message;
-    }
+    if (code === 0) return "兑换成功(" + plan + ")";
+    return "兑换失败: " + message;
   });
 }
 
@@ -318,21 +266,22 @@ function checkinForAccount(cookie, domain, accountIndex) {
     exchangeResult = "跳过(积分不足)";
     if (pointsResult.pointsNum >= 500) {
       return exchange(cookie, domain, EXCHANGE_PLAN);
-    } else {
-      Logger.info("积分 " + pointsResult.pointsNum + " < 500，跳过兑换");
-      return "跳过(积分不足)";
     }
+    return "跳过(积分不足)";
   }).then(function (er) {
     if (er) exchangeResult = er;
     return getStatus(cookie, domain);
   }).then(function (sa) {
     statusAfter = sa;
 
-    var icon = checkinResult.code === 0 ? "✅" : checkinResult.code === 1 ? "🔄" : "❌";
+    var icon = checkinResult.code === 0 ? "✅" : checkinResult.code === 1 ? "🔁" : "❌";
     Logger.status(icon, checkinResult.status);
     if (checkinResult.points !== "0") Logger.points("+" + checkinResult.points);
-    Logger.balance(statusBefore.leftDays + " → " + statusAfter.leftDays);
-    Logger.info("积分余额: " + pointsResult.points + " | 兑换: " + exchangeResult);
+    Logger.daysLeft(statusBefore.leftDays + " → " + statusAfter.leftDays);
+    Logger.balance(pointsResult.points);
+    Logger.action("兑换: " + exchangeResult);
+    if (checkinResult.message) Logger.message(checkinResult.message);
+    Logger.separator();
 
     return {
       accountIndex: accountIndex,
@@ -351,36 +300,31 @@ function checkinForAccount(cookie, domain, accountIndex) {
 
 // ========== 主流程 ==========
 if (isGetHeader) {
-  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
+  Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Manual");
 
   var allHeaders = $request.headers || {};
   var cookie = allHeaders.Cookie || allHeaders.cookie || "";
   var host = getHostFromRequest();
 
   if (!cookie || !host) {
-    Logger.error("Cookie 或 Host 未获取到");
-    notifyFn("GLaDOS", "抓包失败", "未获取到 Cookie 或 Host，请检查重写配置");
+    Logger.status("⚠️", "抓包失败");
+    Logger.message("未获取到 Cookie 或 Host");
+    notifyFn("GLaDOS 抓包失败", "", "未获取到 Cookie 或 Host");
     $done({});
   } else {
     var result = saveCookie(host, cookie);
     var label = "账号 #" + (result.index + 1);
-    if (result.isNew) {
-      Logger.success(label + " Cookie 已保存 [" + host + "]");
-      notifyFn("GLaDOS", label + " 已保存 [" + host + "]", "新账号 Cookie 已记录，将用于自动签到");
-    } else {
-      Logger.info(label + " Cookie 已存在 [" + host + "]");
-      notifyFn("GLaDOS", label + " 已存在 [" + host + "]", "该 Cookie 已保存过，无需重复抓包");
-    }
-    Logger.scriptFinished();
+    Logger.status("✅", result.isNew ? "新账号已保存" : "已存在");
+    Logger.field("Account", label);
+    Logger.field("Domain", host);
+    notifyFn("GLaDOS 抓包", result.isNew ? "新账号已保存" : "已存在", label + " | " + host);
     $done({});
   }
 } else {
   var delay = Math.floor(Math.random() * 11);
-  Logger.info("随机延迟 " + delay + "s");
 
   setTimeout(function () {
-    Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION);
-    Logger.envCheck(getPlatform(), "Cron", true, null);
+    Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Cron");
 
     var savedDomains = getSavedDomains();
     var allCookies = [];
@@ -393,14 +337,14 @@ if (isGetHeader) {
 
     var totalAccounts = allCookies.length;
     if (totalAccounts === 0) {
-      Logger.configLoading(false, "Missing", 0);
-      Logger.warn("未找到已保存的 Cookie");
-      notifyFn("GLaDOS 签到", "无 Cookie", "请先访问 /console/account 抓包");
-      Logger.scriptFinished();
-      return $done();
+      Logger.envCheck(false, "Missing");
+      Logger.status("⚠️", "无 Cookie");
+      notifyFn("GLaDOS 签到", "无 Cookie", "请先抓包");
+      $done();
+      return;
     }
 
-    Logger.configLoading(true, "Found", totalAccounts);
+    Logger.envCheck(true, "Found (" + totalAccounts + ")");
 
     var allResults = [];
     var idx = 0;
@@ -411,17 +355,14 @@ if (isGetHeader) {
         var dup = allResults.filter(function (r) { return r.code === 1; }).length;
         var fail = allResults.filter(function (r) { return r.code !== 0 && r.code !== 1; }).length;
 
-        Logger.taskSummary(totalAccounts, ok, dup, fail);
+        var resultText = "成功" + ok + " 重复" + dup + " 失败" + fail;
+        Logger.summary(totalAccounts, ok, dup, fail, resultText);
 
-        var lines = allResults.map(function (r) {
-          var icon = r.code === 0 ? "✅" : r.code === 1 ? "🔄" : "❌";
-          var pts = r.earnedPoints !== "0" ? " +" + r.earnedPoints : "";
-          return icon + " 账号#" + r.accountIndex + " " + r.domain + " | " + r.status + pts + " | " + r.daysBefore + "→" + r.daysAfter + " | " + r.totalPoints + "积分";
-        });
-
-        var title = "GLaDOS | " + totalAccounts + "账号 成" + ok + " 重" + dup + " 败" + fail;
-        notifyFn(title, "", lines.join("\n"));
-        Logger.scriptFinished();
+        var notifyLines = ["【GLaDOS】执行结果"];
+        notifyLines.push("状态：" + (fail === 0 ? "全部成功" : "部分失败"));
+        notifyLines.push("账号：" + totalAccounts);
+        notifyLines.push("成功：" + ok + " | 重复：" + dup + " | 失败：" + fail);
+        notifyFn("GLaDOS 签到结果", "", notifyLines.join("\n"));
         $done();
         return;
       }
