@@ -358,19 +358,16 @@ if (isGetHeader) {
         var resultText = "成功" + ok + " 重复" + dup + " 失败" + fail;
         Logger.summary(totalAccounts, ok, dup, fail, resultText);
 
-        // 构建通知摘要
-        var notifyLines = ["【GLaDOS】执行结果"];
-        notifyLines.push("状态：" + (fail === 0 ? "全部成功" : "部分失败"));
-        notifyLines.push("账号：" + totalAccounts + " | 成功：" + ok + " 重复：" + dup + " 失败：" + fail);
-        notifyLines.push("---");
+        // 汇总弹窗（3行）
+        notifyFn("GLaDOS", "签到完成", "账号 " + totalAccounts + " | ✅" + ok + " 🔁" + dup + " ❌" + fail);
+
+        // 逐账号弹窗（每个3行）
         for (var r = 0; r < allResults.length; r++) {
           var res = allResults[r];
           var icon = res.code === 0 ? "✅" : res.code === 1 ? "🔁" : "❌";
-          var pts = res.earnedPoints !== "0" ? " +" + res.earnedPoints + "积分" : "";
-          notifyLines.push(icon + " #" + res.accountIndex + " " + res.domain);
-          notifyLines.push("  " + res.status + pts + " | 剩余 " + res.daysAfter);
+          var pts = res.earnedPoints !== "0" ? " | +" + res.earnedPoints + "积分" : "";
+          notifyFn("GLaDOS #" + res.accountIndex, icon + " " + res.status + pts, "剩余 " + res.daysAfter + " | 积分 " + res.totalPoints);
         }
-        notifyFn("GLaDOS 签到结果", "", notifyLines.join("\n"));
         $done();
         return;
       }

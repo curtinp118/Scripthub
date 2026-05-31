@@ -358,6 +358,7 @@ if (isGetHeader) {
     Logger.envCheck(true, "Found (" + totalAccounts + " accounts)");
 
     var results = { success: 0, duplicate: 0, failed: 0, skip: 0 };
+    var notifyResults = [];
     var hostIdx = 0;
     var accIdx = 0;
     var currentAccounts = [];
@@ -369,11 +370,16 @@ if (isGetHeader) {
         var resultText = "成功" + results.success + " 重复" + results.duplicate + " 失败" + results.failed;
         Logger.summary(total, results.success, results.duplicate, results.failed, resultText);
 
-        var notifyLines = ["【通用签到】执行结果"];
-        notifyLines.push("状态：" + (results.failed === 0 ? "全部成功" : "部分失败"));
-        notifyLines.push("账号：" + total);
-        notifyLines.push("成功：" + results.success + " | 重复：" + results.duplicate + " | 失败：" + results.failed);
-        notifyFn("通用签到结果", "", notifyLines.join("\n"));
+        // 汇总弹窗（3行）
+        notifyFn("NewAPI", "签到完成", "账号 " + total + " | ✅" + results.success + " 🔁" + results.duplicate + " ❌" + results.failed);
+
+        // 逐账号弹窗（每个3行）
+        for (var r = 0; r < notifyResults.length; r++) {
+          var nr = notifyResults[r];
+          if (nr.code === -1) continue; // skip
+          var icon = nr.code === 0 ? "✅" : nr.code === 1 ? "🔁" : "❌";
+          notifyFn(nr.title, icon + " " + nr.status, nr.detail);
+        }
         $done();
         return;
       }
@@ -397,6 +403,9 @@ if (isGetHeader) {
         if (result.code === 0) results.success++;
         else if (result.code === 1) results.duplicate++;
         else if (result.code !== -1) results.failed++;
+        if (result.code !== -1) {
+          notifyResults.push({ title: notifyTitleForHost(host, acc), status: result.status, code: result.code, detail: siteName(host) });
+        }
         nextAccount();
       });
     }

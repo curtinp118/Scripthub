@@ -214,8 +214,8 @@ function doCheckin(attempt, maxRetry, headers) {
   return getOnce(headers).then(function (info) {
     if (!info.logged_in) {
       Logger.status("❌", "Cookie 已失效");
-      Logger.summary(1, 0, 0, 1, "Cookie 已失效，请重新获取");
-      notifyFn("V2EX 签到结果", "", "状态：失败\n原因：Cookie 已失效\n请重新访问 V2EX 个人主页");
+      Logger.summary(1, 0, 0, 1, "Cookie 已失效");
+      notifyFn("V2EX", "❌ Cookie 已失效", "请重新访问 V2EX 个人主页");
       $done({});
       return;
     }
@@ -228,7 +228,7 @@ function doCheckin(attempt, maxRetry, headers) {
         if (q.balance) Logger.balance(q.balance);
         Logger.separator();
         Logger.summary(1, 0, 1, 0, "今日已签到");
-        notifyFn("V2EX 签到结果", "", "状态：重复签到\n连续签到：" + info.days + " 天" + (q.balance ? "\n余额：" + q.balance : ""));
+        notifyFn("V2EX", "🔁 今日已签到", "连续 " + info.days + " 天" + (q.balance ? " | " + q.balance : ""));
         $done({});
       });
     }
@@ -238,7 +238,7 @@ function doCheckin(attempt, maxRetry, headers) {
         return sleep(3000).then(function () { return doCheckin(attempt + 1, maxRetry, headers); });
       }
       Logger.summary(1, 0, 0, 1, "未找到 once 码");
-      notifyFn("V2EX 签到结果", "", "状态：失败\n原因：未找到 once 码");
+      notifyFn("V2EX", "❌ 签到失败", "未找到 once 码");
       $done({});
       return;
     }
@@ -252,7 +252,7 @@ function doCheckin(attempt, maxRetry, headers) {
       if (q.balance) Logger.balance(q.balance);
       Logger.separator();
       Logger.summary(1, 1, 0, 0, "签到成功");
-      notifyFn("V2EX 签到结果", "", "状态：成功\n连续签到：" + info.days + " 天" + (q.balance ? "\n余额：" + q.balance : ""));
+      notifyFn("V2EX", "✅ 签到成功", "连续 " + info.days + " 天" + (q.balance ? " | " + q.balance : ""));
       $done({});
     });
   }).catch(function (e) {
@@ -261,7 +261,7 @@ function doCheckin(attempt, maxRetry, headers) {
     }
     Logger.status("❌", "网络错误");
     Logger.summary(1, 0, 0, 1, "网络错误");
-    notifyFn("V2EX 签到结果", "", "状态：失败\n原因：网络错误");
+    notifyFn("V2EX", "❌ 网络错误", "请检查网络连接");
     $done({});
   });
 }
@@ -289,7 +289,7 @@ if (isGetHeader) {
   if (!storedCookie) {
     Logger.envCheck(false, "Missing");
     Logger.status("⚠️", "无 Cookie");
-    notifyFn("V2EX 签到", "", "状态：失败\n原因：未获取到 Cookie\n请先访问 V2EX 个人主页");
+    notifyFn("V2EX", "⚠️ 无 Cookie", "请先访问 V2EX 个人主页");
     $done({});
   } else {
     Logger.envCheck(true, "Found");

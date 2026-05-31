@@ -138,13 +138,13 @@ if (isGetHeader) {
 
   if (!picked || Object.keys(picked).length === 0) {
     Logger.status("⚠️", "未抓到请求头");
-    notifyFn("NS 抓包", "", "状态：失败\n未获取到请求头");
+    notifyFn("NodeSeek", "⚠️ 抓包失败", "未获取到请求头");
     $done({});
   } else {
     var ok = $store.write(JSON.stringify(picked), NS_HEADER_KEY);
     Logger.status("✅", ok ? "请求头已保存" : "保存失败");
     Logger.field("Fields", Object.keys(picked).length);
-    notifyFn("NS 抓包", "", ok ? "状态：成功" : "状态：失败");
+    notifyFn("NodeSeek", ok ? "✅ 抓包成功" : "❌ 保存失败", ok ? "请求头已保存" : "写入存储失败");
     $done({});
   }
 } else {
@@ -154,7 +154,7 @@ if (isGetHeader) {
   if (!raw) {
     Logger.envCheck(false, "Missing");
     Logger.status("⚠️", "缺少请求头");
-    notifyFn("NS签到", "", "状态：失败\n原因：缺少请求头，请先抓包");
+    notifyFn("NodeSeek", "⚠️ 缺少请求头", "请先访问个人页面");
     $done();
   } else {
     var parsed = safeJsonParse(raw);
@@ -163,7 +163,7 @@ if (isGetHeader) {
     if (!savedHeaders) {
       Logger.envCheck(false, "Invalid");
       Logger.status("⚠️", "请求头解析失败");
-      notifyFn("NS签到", "", "状态：失败\n原因：请求头数据损坏");
+      notifyFn("NodeSeek", "❌ 请求头异常", "数据损坏，请重新抓包");
       $done();
     } else {
       Logger.envCheck(true, "Found");
@@ -200,30 +200,30 @@ if (isGetHeader) {
           Logger.status("⚠️", "403 风控");
           Logger.separator();
           Logger.summary(1, 0, 0, 1, "被风控");
-          notifyFn("NS签到", "", "状态：失败\n原因：403 风控，稍后重试");
+          notifyFn("NodeSeek", "⚠️ 被风控", "403，稍后重试");
         } else if (status === 500) {
           Logger.status("❌", "500 服务器错误");
           Logger.separator();
           Logger.summary(1, 0, 0, 1, "服务器错误");
-          notifyFn("NS签到", "", "状态：失败\n原因：500 服务器错误");
+          notifyFn("NodeSeek", "❌ 服务器错误", "500");
         } else if (status >= 200 && status < 300) {
           Logger.status("✅", "签到成功");
           if (msg) Logger.message(msg);
           Logger.separator();
           Logger.summary(1, 1, 0, 0, "签到成功");
-          notifyFn("NS签到", "", "状态：成功" + (msg ? "\n" + msg : ""));
+          notifyFn("NodeSeek", "✅ 签到成功", msg || "签到完成");
         } else {
           Logger.status("❌", "请求异常 " + status);
           Logger.separator();
           Logger.summary(1, 0, 0, 1, "请求异常");
-          notifyFn("NS签到", "", "状态：失败\n原因：请求异常 " + status);
+          notifyFn("NodeSeek", "❌ 请求异常", "HTTP " + status);
         }
         $done();
       }, function (reason) {
         Logger.status("❌", "网络错误");
         Logger.separator();
         Logger.summary(1, 0, 0, 1, "网络错误");
-        notifyFn("NS签到", "", "状态：失败\n原因：网络错误");
+        notifyFn("NodeSeek", "❌ 网络错误", "请检查网络连接");
         $done();
       });
     }

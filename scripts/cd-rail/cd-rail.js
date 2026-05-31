@@ -139,13 +139,13 @@ if (isGetHeader) {
 
   if (!picked || Object.keys(picked).length === 0) {
     Logger.status("⚠️", "未抓到请求头");
-    notifyFn("成都地铁 抓包", "", "状态：失败\n未获取到请求头");
+    notifyFn("成都地铁", "⚠️ 抓包失败", "未获取到请求头");
     $done({});
   } else {
     var ok = $store.write(JSON.stringify(picked), CD_HEADER_KEY);
     Logger.status("✅", ok ? "请求头已保存" : "保存失败");
     Logger.field("Fields", Object.keys(picked).length);
-    notifyFn("成都地铁 抓包", "", ok ? "状态：成功\n请求头已保存" : "状态：失败\n保存失败");
+    notifyFn("成都地铁", ok ? "✅ 抓包成功" : "❌ 保存失败", ok ? "请求头已保存" : "写入存储失败");
     $done({});
   }
 } else {
@@ -155,14 +155,14 @@ if (isGetHeader) {
   if (!raw) {
     Logger.envCheck(false, "Missing");
     Logger.status("⚠️", "缺少请求头");
-    notifyFn("成都地铁签到", "", "状态：失败\n原因：缺少请求头，请先抓包");
+    notifyFn("成都地铁", "⚠️ 缺少请求头", "请先在 App 内签到一次");
     $done();
   } else {
     var savedHeaders = safeJsonParse(raw);
     if (!savedHeaders) {
       Logger.envCheck(false, "Invalid");
       Logger.status("⚠️", "请求头解析失败");
-      notifyFn("成都地铁签到", "", "状态：失败\n原因：请求头解析失败");
+      notifyFn("成都地铁", "❌ 请求头异常", "解析失败，请重新抓包");
       $done();
     } else {
       Logger.envCheck(true, "Found");
@@ -209,7 +209,7 @@ if (isGetHeader) {
           Logger.status("❌", "登录失效 HTTP " + status);
           Logger.separator();
           Logger.summary(1, 0, 0, 1, "登录失效");
-          notifyFn("成都地铁签到", "", "状态：失败\n原因：登录失效 HTTP " + status);
+          notifyFn("成都地铁", "❌ 登录失效", "HTTP " + status + "，请重新抓包");
         } else if (status >= 200 && status < 300) {
           if (code === "0" && (msg === "SUCCESS" || msg === "")) {
             var inc = integralIncrement !== undefined ? String(integralIncrement) : "";
@@ -217,30 +217,30 @@ if (isGetHeader) {
             if (inc) Logger.points("+" + inc);
             Logger.separator();
             Logger.summary(1, 1, 0, 0, "签到成功");
-            notifyFn("成都地铁签到", "", "状态：成功" + (inc ? "\n积分：+" + inc : ""));
+            notifyFn("成都地铁", "✅ 签到成功", inc ? "+" + inc + " 积分" : "签到完成");
           } else if (code === "1102") {
             Logger.status("🔁", "今日已签到");
             Logger.separator();
             Logger.summary(1, 0, 1, 0, "今日已签到");
-            notifyFn("成都地铁签到", "", "状态：重复签到\n" + (msg || "请勿重复签到"));
+            notifyFn("成都地铁", "🔁 今日已签到", msg || "请勿重复签到");
           } else {
             Logger.status("❌", msg || "未知返回");
             Logger.separator();
             Logger.summary(1, 0, 0, 1, msg || "返回异常");
-            notifyFn("成都地铁签到", "", "状态：失败\n原因：" + (msg || "未知返回"));
+            notifyFn("成都地铁", "❌ 签到失败", msg || "未知返回");
           }
         } else {
           Logger.status("❌", "接口异常 " + status);
           Logger.separator();
           Logger.summary(1, 0, 0, 1, "接口异常");
-          notifyFn("成都地铁签到", "", "状态：失败\n原因：接口异常 " + status);
+          notifyFn("成都地铁", "❌ 接口异常", "HTTP " + status);
         }
         $done();
       }, function (reason) {
         Logger.status("❌", "网络错误");
         Logger.separator();
         Logger.summary(1, 0, 0, 1, "网络错误");
-        notifyFn("成都地铁签到", "", "状态：失败\n原因：网络错误");
+        notifyFn("成都地铁", "❌ 网络错误", "请检查网络连接");
         $done();
       });
     }

@@ -168,11 +168,11 @@ if (isGetHeader) {
 
   if (!cookie) {
     Logger.status("⚠️", "Cookie 未获取到");
-    notifyFn("中国移动", "抓包失败", "未获取到 Cookie");
+    notifyFn("中国移动", "⚠️ 抓包失败", "未获取到 Cookie");
   } else {
     var saved = saveCookie(cookie);
     Logger.status("✅", saved ? "Cookie 已更新" : "Cookie 未变化");
-    if (saved) notifyFn("中国移动", "Cookie 已更新", "后续将用于自动签到领奖");
+    if (saved) notifyFn("中国移动", "✅ Cookie 已更新", "后续将用于自动签到领奖");
   }
   $done({});
 } else {
@@ -182,7 +182,7 @@ if (isGetHeader) {
   if (!storedCookie) {
     Logger.envCheck(false, "Missing");
     Logger.status("⚠️", "无 Cookie");
-    notifyFn("中国移动签到", "", "状态：失败\n原因：未获取到 Cookie");
+    notifyFn("中国移动", "⚠️ 无 Cookie", "请先打开移动 App 签到页面");
     $done();
   } else {
     Logger.envCheck(true, "Found");
@@ -199,7 +199,7 @@ if (isGetHeader) {
       if (!signInData) {
         Logger.status("❌", "响应解析错误");
         Logger.summary(1, 0, 0, 1, "响应解析错误");
-        notifyFn("中国移动签到", "", "状态：失败\n原因：响应解析错误");
+        notifyFn("中国移动", "❌ 签到失败", "响应解析错误");
         $done();
         return;
       }
@@ -207,7 +207,7 @@ if (isGetHeader) {
       if (!signInData.success && signInData.code !== "SUCCESS") {
         Logger.status("❌", signInData.msg || signInData.code);
         Logger.summary(1, 0, 0, 1, signInData.msg || "签到失败");
-        notifyFn("中国移动签到", "", "状态：失败\n原因：" + (signInData.msg || signInData.code));
+        notifyFn("中国移动", "❌ 签到失败", signInData.msg || signInData.code || "未知错误");
         $done();
         return;
       }
@@ -228,12 +228,12 @@ if (isGetHeader) {
             Logger.points(prize);
             Logger.separator();
             Logger.summary(1, 1, 0, 0, "签到+领奖成功");
-            notifyFn("中国移动签到", "", "状态：成功\n奖励：" + prize);
+            notifyFn("中国移动", "✅ 签到+领奖成功", prize);
           } else {
             Logger.status("✅", "签到成功，领奖失败");
             Logger.separator();
             Logger.summary(1, 1, 0, 0, "签到成功");
-            notifyFn("中国移动签到", "", "状态：成功（领奖失败）");
+            notifyFn("中国移动", "✅ 签到成功", "领奖失败");
           }
           $done();
         });
@@ -242,13 +242,13 @@ if (isGetHeader) {
         Logger.action("无可领取奖励");
         Logger.separator();
         Logger.summary(1, 1, 0, 0, "签到成功");
-        notifyFn("中国移动签到", "", "状态：成功\n" + (signInData.msg || "已签到"));
+        notifyFn("中国移动", "✅ 签到成功", signInData.msg || "已签到");
         $done();
       }
     }).catch(function (e) {
       Logger.status("❌", "网络错误");
       Logger.summary(1, 0, 0, 1, "网络错误");
-      notifyFn("中国移动签到", "", "状态：失败\n原因：网络错误");
+      notifyFn("中国移动", "❌ 网络错误", "请检查网络连接");
       $done();
     });
   }
