@@ -1,6 +1,6 @@
 /****************************** 
 脚本功能：GLaDOS / Railgun 自动签到 + 积分兑换（多账号版）
-Version  : v1.2.0
+Version  : v1.3.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
@@ -108,7 +108,7 @@ var Logger = {
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "GLaDOS";
-var SCRIPT_VERSION = "v1.2.0";
+var SCRIPT_VERSION = "v1.3.0";
 var COOKIES_KEY_PREFIX = "GLaDOS_Cookies";
 var DOMAINS_LIST_KEY = "GLaDOS_Domains";
 var EXCHANGE_PLAN = "plan500";
@@ -219,12 +219,12 @@ function checkin(cookie, domain) {
 
 function getStatus(cookie, domain) {
   return request("https://" + domain + "/api/user/status", "GET", cookie, domain).then(function (resp) {
-    if (resp.error || !resp.data) return { leftDays: "N/A" };
-    var leftDays = resp.data.data && resp.data.data.leftDays;
-    if (leftDays !== undefined && leftDays !== null) {
-      return { leftDays: parseInt(parseFloat(leftDays), 10) + " 天" };
-    }
-    return { leftDays: "N/A" };
+    if (resp.error || !resp.data) return { leftDays: "N/A", email: "unknown" };
+    var data = resp.data.data || {};
+    var leftDays = data.leftDays;
+    var email = data.email || "unknown";
+    var days = (leftDays !== undefined && leftDays !== null) ? parseInt(parseFloat(leftDays), 10) + " 天" : "N/A";
+    return { leftDays: days, email: email };
   });
 }
 
@@ -251,12 +251,14 @@ function exchange(cookie, domain, plan) {
 }
 
 function checkinForAccount(cookie, domain, accountIndex) {
-  Logger.accountHeader(accountIndex, domain);
-
-  var statusBefore, checkinResult, pointsResult, exchangeResult, statusAfter;
+  var statusBefore, checkinResult, pointsResult, exchangeResult, statusAfter, accountEmail;
 
   return getStatus(cookie, domain).then(function (sb) {
     statusBefore = sb;
+    accountEmail = sb.email;
+    var displayEmail = accountEmail !== "unknown" ? accountEmail : "Account #" + accountIndex;
+    Logger.accountHeader(accountIndex, domain);
+    Logger.field("Email", displayEmail);
     return checkin(cookie, domain);
   }).then(function (cr) {
     checkinResult = cr;
@@ -283,9 +285,12 @@ function checkinForAccount(cookie, domain, accountIndex) {
     if (checkinResult.message) Logger.message(checkinResult.message);
     Logger.separator();
 
+    var displayName = accountEmail !== "unknown" ? accountEmail : "Account #" + accountIndex;
+
     return {
       accountIndex: accountIndex,
       domain: domain,
+      email: displayName,
       status: checkinResult.status,
       code: checkinResult.code,
       message: checkinResult.message,
@@ -366,7 +371,7 @@ if (isGetHeader) {
           var res = allResults[r];
           var icon = res.code === 0 ? "✅" : res.code === 1 ? "🔁" : "❌";
           var pts = res.earnedPoints !== "0" ? " | +" + res.earnedPoints + "积分" : "";
-          notifyFn("GLaDOS #" + res.accountIndex, icon + " " + res.status + pts, "剩余 " + res.daysAfter + " | 积分 " + res.totalPoints);
+          notifyFn(icon + " " + res.email, res.status + pts, "剩余 " + res.daysAfter + " | 积分 " + res.totalPoints + " | " + res.exchange);
         }
         $done();
         return;
