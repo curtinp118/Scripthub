@@ -358,10 +358,18 @@ if (isGetHeader) {
         var resultText = "成功" + ok + " 重复" + dup + " 失败" + fail;
         Logger.summary(totalAccounts, ok, dup, fail, resultText);
 
+        // 构建通知摘要
         var notifyLines = ["【GLaDOS】执行结果"];
         notifyLines.push("状态：" + (fail === 0 ? "全部成功" : "部分失败"));
-        notifyLines.push("账号：" + totalAccounts);
-        notifyLines.push("成功：" + ok + " | 重复：" + dup + " | 失败：" + fail);
+        notifyLines.push("账号：" + totalAccounts + " | 成功：" + ok + " 重复：" + dup + " 失败：" + fail);
+        notifyLines.push("---");
+        for (var r = 0; r < allResults.length; r++) {
+          var res = allResults[r];
+          var icon = res.code === 0 ? "✅" : res.code === 1 ? "🔁" : "❌";
+          var pts = res.earnedPoints !== "0" ? " +" + res.earnedPoints + "积分" : "";
+          notifyLines.push(icon + " #" + res.accountIndex + " " + res.domain);
+          notifyLines.push("  " + res.status + pts + " | 剩余 " + res.daysAfter);
+        }
         notifyFn("GLaDOS 签到结果", "", notifyLines.join("\n"));
         $done();
         return;
