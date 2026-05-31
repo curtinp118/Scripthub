@@ -168,9 +168,11 @@ if (isGetHeader) {
 
   if (!cookie) {
     Logger.status("⚠️", "Cookie 未获取到");
+    notifyFn("中国移动", "抓包失败", "未获取到 Cookie");
   } else {
     var saved = saveCookie(cookie);
     Logger.status("✅", saved ? "Cookie 已更新" : "Cookie 未变化");
+    if (saved) notifyFn("中国移动", "Cookie 已更新", "后续将用于自动签到领奖");
   }
   $done({});
 } else {

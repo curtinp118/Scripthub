@@ -275,9 +275,11 @@ if (isGetHeader) {
 
   if (!cookie) {
     Logger.status("⚠️", "Cookie 未获取到");
+    notifyFn("V2EX", "抓包失败", "未获取到 Cookie，请检查 MITM 配置");
   } else {
     var saved = saveCookie(cookie);
     Logger.status("✅", saved ? "Cookie 已更新" : "Cookie 未变化");
+    if (saved) notifyFn("V2EX", "Cookie 已更新", "后续将用于自动签到");
   }
   $done({});
 } else {
