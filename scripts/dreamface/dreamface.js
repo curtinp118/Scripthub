@@ -1,14 +1,17 @@
-/****************************** 
-脚本功能：Dreamface 3.0.0 - 解锁会员
+/******************************
+脚本功能：DreamFace - 解锁会员
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
-Platform : Quantumult X
+Platform : Quantumult X / Loon / Surge
+
+使用说明：
+MITM 重写响应体，解锁 DreamFace 会员功能。
 
 [rewrite_local]
 https://www.dreamfaceapp.com/df-server/user/save_user_login url script-response-body https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/dreamface/dreamface.js
 
-[mitm]
+[MITM]
 hostname = www.dreamfaceapp.com
 *******************************/
 

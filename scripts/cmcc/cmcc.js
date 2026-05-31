@@ -1,33 +1,18 @@
-/****************************** 
+/******************************
 脚本功能：中国移动 自动签到领奖
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
-使用说明：先访问中国移动签到页面保存 Cookie，再由定时任务自动签到领奖。
+使用说明：
+访问中国移动签到页面保存 Cookie，定时任务自动签到领奖。
 
 [rewrite_local]
-^https?:\/\/wx\.10086\.cn\/qwhdhub\/ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js
+^https?://wx\.10086\.cn/qwhdhub/ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js
 
 [task_local]
 35 8 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js, tag=中国移动签到, enabled=true
-
-[MITM]
-hostname = %APPEND% wx.10086.cn
-
-Loon:
-[Script]
-http-request ^https?://wx\.10086\.cn/qwhdhub/ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js, requires-body=false, tag=中国移动抓包
-cron "35 8 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js, tag=中国移动签到, enabled=true
-
-[MITM]
-hostname = wx.10086.cn
-
-Surge:
-[Script]
-中国移动抓包 = type=http-request, pattern=^https?://wx\.10086\.cn/qwhdhub/, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js
-中国移动签到 = type=cron, cronexp="35 8 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cmcc/cmcc.js, timeout=60
 
 [MITM]
 hostname = %APPEND% wx.10086.cn

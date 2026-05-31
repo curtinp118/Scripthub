@@ -1,14 +1,17 @@
-/****************************** 
+/******************************
 脚本功能：Notability - 解锁会员
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
-Platform : Quantumult X
+Platform : Quantumult X / Loon / Surge
+
+使用说明：
+MITM 重写响应体，解锁 Notability 会员功能。
 
 [rewrite_local]
-^https?:\/\/notability\.com\/(global|subscriptions) url script-response-body https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/notability/notability.js
+^https?://notability\.com/(global|subscriptions) url script-response-body https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/notability/notability.js
 
-[mitm]
+[MITM]
 hostname = notability.com
 *******************************/
 

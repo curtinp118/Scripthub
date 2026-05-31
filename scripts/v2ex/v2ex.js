@@ -1,33 +1,18 @@
-/****************************** 
+/******************************
 脚本功能：V2EX 每日签到
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
-使用说明：先访问 V2EX 个人主页保存 Cookie，再由定时任务自动签到。
+使用说明：
+访问 V2EX 个人主页保存 Cookie，定时任务自动签到领取铜币。
 
 [rewrite_local]
-^https:\/\/www\.v2ex\.com\/(mission|member).* url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js
+^https://www\.v2ex\.com/(mission|member).* url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js
 
 [task_local]
-10 9 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js, tag=V2EX 每日签到, enabled=true, img-url=https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/V2ex.png
-
-[MITM]
-hostname = %APPEND% www.v2ex.com
-
-Loon:
-[Script]
-http-request ^https://www\.v2ex\.com/(mission|member).* script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js, requires-body=false, tag=V2EX 抓包
-cron "10 9 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js, tag=V2EX 每日签到, enabled=true
-
-[MITM]
-hostname = www.v2ex.com
-
-Surge:
-[Script]
-V2EX 抓包 = type=http-request, pattern=^https://www\.v2ex\.com/(mission|member).* , requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js
-V2EX 签到 = type=cron, cronexp="10 9 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js, timeout=60
+10 9 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/v2ex/v2ex.js, tag=V2EX 每日签到, enabled=true
 
 [MITM]
 hostname = %APPEND% www.v2ex.com

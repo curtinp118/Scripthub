@@ -1,4 +1,4 @@
-/****************************** 
+/******************************
 脚本功能：GLaDOS / Railgun 自动签到 + 积分兑换（多账号版）
 Version  : v1.1.0
 更新时间：2026-05-31
@@ -6,43 +6,17 @@ Version  : v1.1.0
 Platform : Quantumult X / Loon / Surge
 
 使用说明：
-  访问 GLaDOS 任意域名的 /console/account 页面抓包保存 Cookie，定时任务自动对已保存 Cookie 的域名执行签到。
-  支持 glados.network、railgun.info、glados.vip、glados.one、glados.space，各域名支持多账号。
-  同一域名多次抓包可保存不同账号的 Cookie。
+访问 GLaDOS 任意域名的 /console/account 页面抓包保存 Cookie，定时任务自动签到。支持 glados.network、railgun.info、glados.vip、glados.one、glados.space，各域名支持多账号。
 
 [rewrite_local]
-^https:\/\/glados\.network\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-^https:\/\/railgun\.info\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-^https:\/\/glados\.vip\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-^https:\/\/glados\.one\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-^https:\/\/glados\.space\/console\/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https://glados\.network/console/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https://railgun\.info/console/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https://glados\.vip/console/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https://glados\.one/console/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
+^https://glados\.space/console/account$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
 
 [task_local]
-10 7 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, tag=GLaDOS 签到, enabled=true, img-url=https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/GlaDos.png
-
-[MITM]
-hostname = %APPEND% glados.network, railgun.info, glados.vip, glados.one, glados.space
-
-Loon:
-[Script]
-http-request ^https://glados\.network/console/account$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, requires-body=false, tag=GLaDOS 抓包
-http-request ^https://railgun\.info/console/account$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, requires-body=false, tag=GLaDOS 抓包
-http-request ^https://glados\.vip/console/account$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, requires-body=false, tag=GLaDOS 抓包
-http-request ^https://glados\.one/console/account$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, requires-body=false, tag=GLaDOS 抓包
-http-request ^https://glados\.space/console/account$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, requires-body=false, tag=GLaDOS 抓包
-cron "10 7 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, tag=GLaDOS 签到, enabled=true
-
-[MITM]
-hostname = glados.network, railgun.info, glados.vip, glados.one, glados.space
-
-Surge:
-[Script]
-GLaDOS 抓包 = type=http-request, pattern=^https://glados\.network/console/account$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-GLaDOS 抓包2 = type=http-request, pattern=^https://railgun\.info/console/account$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-GLaDOS 抓包3 = type=http-request, pattern=^https://glados\.vip/console/account$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-GLaDOS 抓包4 = type=http-request, pattern=^https://glados\.one/console/account$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-GLaDOS 抓包5 = type=http-request, pattern=^https://glados\.space/console/account$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js
-GLaDOS 签到 = type=cron, cronexp="10 7 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, timeout=60
+10 7 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/glados/glados.js, tag=GLaDOS 签到, enabled=true
 
 [MITM]
 hostname = %APPEND% glados.network, railgun.info, glados.vip, glados.one, glados.space

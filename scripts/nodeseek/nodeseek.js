@@ -1,34 +1,21 @@
-/****************************** 
-脚本功能：NS论坛签到
+/******************************
+脚本功能：NodeSeek 论坛签到
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
+使用说明：
+访问 NodeSeek 个人页面保存请求头，定时任务自动签到。
+
 [rewrite_local]
-^https:\/\/www\.nodeseek\.com\/api\/account\/getInfo\/\d+\?readme=1$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js
+^https://www\.nodeseek\.com/api/account/getInfo/\d+\?readme=1$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js
 
 [task_local]
 30 8 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js, tag=NS签到, enabled=true
 
 [MITM]
 hostname = www.nodeseek.com
-
-Loon:
-[Script]
-http-request ^https://www\.nodeseek\.com/api/account/getInfo/\d+\?readme=1$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js, requires-body=false, tag=NS抓包
-cron "30 8 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js, tag=NS签到, enabled=true
-
-[MITM]
-hostname = www.nodeseek.com
-
-Surge:
-[Script]
-NS抓包 = type=http-request, pattern=^https://www\.nodeseek\.com/api/account/getInfo/\d+\?readme=1$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js
-NS签到 = type=cron, cronexp="30 8 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/nodeseek/nodeseek.js, timeout=60
-
-[MITM]
-hostname = %APPEND% www.nodeseek.com
 *******************************/
 
 // ========== 三端适配层 ==========

@@ -1,36 +1,21 @@
-/****************************** 
+/******************************
 脚本功能：成都地铁签到(积分)
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
-说明：打开成都地铁-我的-会员中心 点击签到按钮 手动签到一次 脚本将自动保存用户信息
+使用说明：
+打开成都地铁 App 签到页面保存请求头，定时任务自动签到。
 
 [rewrite_local]
-^https:\/\/app\.cdmetro\.chengdurail\.cn\/platform\/users\/user\/sign-in-integral(-day)?(\?.*)?$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js
+^https://app\.cdmetro\.chengdurail\.cn/platform/users/user/sign-in-integral(-day)?(\?.*)?$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js
 
 [task_local]
 10 9 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js, tag=成都地铁签到, enabled=true
 
 [MITM]
 hostname = app.cdmetro.chengdurail.cn
-
-Loon:
-[Script]
-http-request ^https://app\.cdmetro\.chengdurail\.cn/platform/users/user/sign-in-integral(-day)? script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js, requires-body=false, tag=成都地铁抓包
-cron "10 9 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js, tag=成都地铁签到, enabled=true
-
-[MITM]
-hostname = app.cdmetro.chengdurail.cn
-
-Surge:
-[Script]
-成都地铁抓包 = type=http-request, pattern=^https://app\.cdmetro\.chengdurail\.cn/platform/users/user/sign-in-integral(-day)?, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js
-成都地铁签到 = type=cron, cronexp="10 9 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/cd-rail/cd-rail.js, timeout=60
-
-[MITM]
-hostname = %APPEND% app.cdmetro.chengdurail.cn
 *******************************/
 
 // ========== 三端适配层 ==========

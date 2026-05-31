@@ -1,34 +1,18 @@
-/****************************** 
+/******************************
 脚本功能：通用签到脚本（多站点 + 多账号版）
 Version  : v1.1.0
 更新时间：2026-05-31
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
-使用说明：访问 new-api 类站点的 /api/user/self 页面抓包保存请求头，定时任务自动签到。
-         支持任意 new-api 站点，同一站点支持多账号。失败的账号会自动跳过，需重新抓包激活。
+使用说明：
+访问 new-api 类站点的 /api/user/self 页面抓包保存请求头，定时任务自动签到。支持任意 new-api 站点，同一站点支持多账号。
 
 [rewrite_local]
-^https:\/\/[^/]+\/api\/user\/self$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js
+^https://[^/]+/api/user/self$ url script-request-header https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js
 
 [task_local]
 30 7 * * * https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js, tag=通用签到, enabled=true
-
-[MITM]
-hostname = %APPEND% *
-
-Loon:
-[Script]
-http-request ^https://[^/]+/api/user/self$ script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js, requires-body=false, tag=通用签到抓包
-cron "30 7 * * *" script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js, tag=通用签到, enabled=true
-
-[MITM]
-hostname = *
-
-Surge:
-[Script]
-通用签到抓包 = type=http-request, pattern=^https://[^/]+/api/user/self$, requires-body=0, script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js
-通用签到 = type=cron, cronexp="30 7 * * *", script-path=https://raw.githubusercontent.com/curtinp118/Scripthub/main/scripts/new-api/new-api.js, timeout=60
 
 [MITM]
 hostname = %APPEND% *
