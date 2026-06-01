@@ -2,7 +2,7 @@
   {
     "name": "glados",
     "file": "scripts/glados/glados.js",
-    "desc": "GLaDOS / Railgun 自动签到 + 积分兑换（多账号）",
+    "desc": "GLaDOS / Railgun 自动签到 + 积分兑换（多账号版）",
     "author": "Curtinp118",
     "platforms": ["QX", "Loon", "Surge"],
     "cron": "10 7 * * *",
@@ -20,9 +20,81 @@
   {
     "name": "dandanvip",
     "file": "scripts/dandanvip/dandanvip_unlock.js",
-    "desc": "蛋蛋不语VIP会员解锁",
+    "desc": "蛋蛋不语 - 解锁会员",
     "author": "Curtinp118",
     "platforms": ["QX", "Loon", "Surge"],
     "updated": "2026-06-01"
+  },
+  {
+    "name": "buding",
+    "file": "scripts/buding/buding.js",
+    "desc": "布丁锁屏 - 解锁会员",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "caiyun",
+    "file": "scripts/caiyun/caiyun.js",
+    "desc": "彩云天气 - 解锁会员",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "cd-rail",
+    "file": "scripts/cd-rail/cd-rail.js",
+    "desc": "成都地铁签到(积分)",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "cmcc",
+    "file": "scripts/cmcc/cmcc.js",
+    "desc": "中国移动 自动签到领奖",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "dreamface",
+    "file": "scripts/dreamface/dreamface.js",
+    "desc": "DreamFace - 解锁会员",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "new-api",
+    "file": "scripts/new-api/new-api.js",
+    "desc": "通用签到脚本（多站点 + 多账号版）",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "nicegram",
+    "file": "scripts/nicegram/nicegram.js",
+    "desc": "Nicegram - 解锁会员",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "nodeseek",
+    "file": "scripts/nodeseek/nodeseek.js",
+    "desc": "NodeSeek 论坛签到",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
+  },
+  {
+    "name": "notability",
+    "file": "scripts/notability/notability.js",
+    "desc": "Notability - 解锁会员",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-05-31"
   }
 ]
