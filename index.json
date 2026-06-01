@@ -16,5 +16,13 @@
     "platforms": ["QX", "Loon", "Surge"],
     "cron": "10 9 * * *",
     "updated": "2026-05-30"
+  },
+  {
+    "name": "dandanvip",
+    "file": "scripts/dandanvip/dandanvip_unlock.js",
+    "desc": "蛋蛋不语VIP会员解锁",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-06-01"
   }
 ]
