@@ -318,7 +318,7 @@ if (isGetHeader) {
   if (!host || !picked || !picked.Cookie || !picked["new-api-user"]) {
     Logger.status("⚠️", "抓包失败");
     Logger.message("缺少 Cookie 或 new-api-user");
-    notifyFn("通用签到 抓包", "", "状态：失败\n缺少关键信息");
+    notifyFn("通用签到", "❌ 抓包失败", "缺少关键信息");
     $done({});
   } else {
     var account = (picked["new-api-user"] || "").trim();
@@ -335,7 +335,7 @@ if (isGetHeader) {
     } else {
       Logger.status("❌", "保存失败");
     }
-    notifyFn("通用签到 抓包", "", ok ? "状态：成功\n" + siteName(host) : "状态：失败");
+    notifyFn("通用签到", ok ? "✅ 抓包成功" : "❌ 抓包失败", ok ? siteName(host) : "保存失败");
     $done({});
   }
 } else {
@@ -348,7 +348,7 @@ if (isGetHeader) {
   if (!onlyHost && hostsToRun.length === 0) {
     Logger.envCheck(false, "Missing");
     Logger.status("⚠️", "无可用站点");
-    notifyFn("通用签到", "", "状态：失败\n原因：无可用站点，请先抓包");
+    notifyFn("通用签到", "❌ 执行失败", "无可用站点，请先抓包");
     $done();
   } else {
     var totalAccounts = 0;
