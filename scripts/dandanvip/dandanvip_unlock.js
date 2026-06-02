@@ -87,7 +87,8 @@ var VIP_PATCH = {
   vip_status: true,
   vip_level: 3,
   vip_expire_at: "2099-09-19T22:21:06.147807+00:00",
-  username: "TG@Curtinp118"
+  username: "TG@Curtinp118",
+  avatar_url: "https://i.ibb.co/NgghpGgn/11zon-A9-CBAC35-2-CA3-4-E7-F-923-D-7304-EEB40635.webp"
 };
 
 function patch(obj) {
