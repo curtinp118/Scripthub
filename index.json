@@ -96,5 +96,13 @@
     "author": "Curtinp118",
     "platforms": ["QX", "Loon", "Surge"],
     "updated": "2026-05-31"
+  },
+  {
+    "name": "2bulu",
+    "file": "scripts/2bulu/2bulu.js",
+    "desc": "两步路 - 解锁 VIP/SVIP 会员信息",
+    "author": "Curtinp118",
+    "platforms": ["QX", "Loon", "Surge"],
+    "updated": "2026-07-07"
   }
 ]
