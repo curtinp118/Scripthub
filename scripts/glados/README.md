@@ -68,9 +68,15 @@ hostname = %APPEND% glados.network, railgun.info, glados.vip, glados.one, glados
 ## 注意事项
 
 - 积分 ≥500 时自动兑换 plan500
-- Cookie 失效后需重新访问控制台获取
+- Cookie 失效或出现 `Automated check-in detected` / `device-mismatch` 时，需在同一个
+  登录浏览器重新访问控制台抓包；脚本会同时保存该请求的 User-Agent，后续签到使用
+  与 Cookie 匹配的浏览器标识
+- Cookie 校验兼容 `gld:sess` / `gld:sess.sig`，也兼容旧版 `koa:sess` / `koa:sess.sig`；
+  不会改写会话前缀
+- 已保存的旧版字符串 Cookie 会自动兼容读取；重新抓包一次即可记录对应 User-Agent
 
 ## 更新记录
 
+- v1.4.0 - 兼容新版 gld 会话前缀，保存抓包时 User-Agent，修复新版设备校验失败
 - v1.1.0 - 统一日志规范、六阶段结构、Logger 模块
 - v1.0.0 - 初始版本

@@ -1,7 +1,7 @@
 /****************************** 
 脚本功能：GLaDOS / Railgun 自动签到 + 积分兑换（多账号版）
-Version  : v1.3.0
-更新时间：2026-05-31
+Version  : v1.4.0
+更新时间：2026-10-07
 作者：Curtinp118
 Platform : Quantumult X / Loon / Surge
 
@@ -108,15 +108,98 @@ var Logger = {
 
 // ========== 工具函数 ==========
 var SCRIPT_NAME = "GLaDOS";
-var SCRIPT_VERSION = "v1.3.0";
+var SCRIPT_VERSION = "v1.4.0";
 var COOKIES_KEY_PREFIX = "GLaDOS_Cookies";
 var DOMAINS_LIST_KEY = "GLaDOS_Domains";
 var EXCHANGE_PLAN = "plan500";
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+var DEFAULT_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+var UA = DEFAULT_UA;
 var isGetHeader = typeof $request !== "undefined";
 
 function safeJsonParse(str) {
   try { return JSON.parse(str); } catch (_) { return null; }
+}
+
+function normalizeCookie(rawCookie) {
+  var cookie = String(rawCookie || "").trim();
+  while (cookie.length >= 2 && cookie[0] === cookie[cookie.length - 1] &&
+    (cookie[0] === "\"" || cookie[0] === "'")) {
+    cookie = cookie.slice(1, -1).trim();
+  }
+  if (/^cookie:/i.test(cookie)) cookie = cookie.slice(7).trim();
+  while (cookie.length >= 2 && cookie[0] === cookie[cookie.length - 1] &&
+    (cookie[0] === "\"" || cookie[0] === "'")) {
+    cookie = cookie.slice(1, -1).trim();
+  }
+  return cookie;
+}
+
+function getHeader(headers, name) {
+  var target = String(name || "").toLowerCase();
+  var source = headers || {};
+  for (var key in source) {
+    if (Object.prototype.hasOwnProperty.call(source, key) &&
+      String(key).toLowerCase() === target) return source[key];
+  }
+  return "";
+}
+
+function parseSessionPrefixes(cookie) {
+  var found = {};
+  var parts = String(cookie || "").split(";");
+  for (var i = 0; i < parts.length; i++) {
+    var key = parts[i].trim().split("=", 1)[0].trim();
+    var match = key.match(/^([A-Za-z0-9_.-]+):sess(\.sig)?$/);
+    if (!match) continue;
+    if (!found[match[1]]) found[match[1]] = { sess: false, sig: false };
+    found[match[1]][match[2] ? "sig" : "sess"] = true;
+  }
+  return found;
+}
+
+function validateCookie(cookie) {
+  var normalized = normalizeCookie(cookie);
+  if (!normalized) return { valid: false, message: "Cookie 为空" };
+  var groups = parseSessionPrefixes(normalized);
+  var prefixes = Object.keys(groups);
+  for (var i = 0; i < prefixes.length; i++) {
+    var fields = groups[prefixes[i]];
+    if (fields.sess && fields.sig) return { valid: true, prefix: prefixes[i] };
+  }
+  return {
+    valid: false,
+    message: "Cookie 缺少成对的 <前缀>:sess 与 <前缀>:sess.sig"
+  };
+}
+
+function parseEarnedPoints(message) {
+  var text = String(message || "");
+  var match = text.match(/(?:got\s+|获得\s*)(\d+)\s*(?:points?|点|积分)?/i);
+  return match ? String(parseInt(match[1], 10)) : "0";
+}
+
+function classifyCheckin(code, message) {
+  var numericCode = parseInt(code, 10);
+  if (numericCode === 0) return 0;
+  if (numericCode === 1) return 1;
+  var text = String(message || "").toLowerCase();
+  if (/got\s+\d+\s+points?/.test(text)) return 0;
+  if (["repeat", "already", "重复", "已签到", "签到过", "请勿"].some(function (keyword) {
+    return text.indexOf(keyword) !== -1;
+  })) return 1;
+  return numericCode;
+}
+
+function classifyFailureMessage(message) {
+  var text = String(message || "").toLowerCase();
+  if (text.indexOf("automated check-in detected") !== -1 ||
+    text.indexOf("device-mismatch") !== -1) {
+    return "设备校验失败（请同步登录浏览器的 User-Agent）";
+  }
+  if (["没有权限", "权限不足", "未登录", "登录已失效", "unauthorized", "forbidden", "invalid token"].some(function (keyword) {
+    return text.indexOf(keyword) !== -1;
+  })) return "鉴权失败（请重新获取 Cookie）";
+  return "签到失败";
 }
 
 function getPlatform() {
@@ -150,25 +233,54 @@ function addDomain(domain) {
   } catch (e) {}
 }
 
-function getCookiesForDomain(domain) {
+function getAccountsForDomain(domain) {
   try {
     var raw = $store.read(cookiesKeyFor(domain));
     if (!raw) return [];
     var list = safeJsonParse(raw);
-    return Array.isArray(list) ? list.filter(Boolean) : [];
+    if (!Array.isArray(list)) return [];
+    return list.map(function (item) {
+      if (typeof item === "string") {
+        return { cookie: normalizeCookie(item), userAgent: DEFAULT_UA };
+      }
+      if (!item || typeof item.cookie !== "string") return null;
+      return {
+        cookie: normalizeCookie(item.cookie),
+        userAgent: typeof item.userAgent === "string" && item.userAgent.trim()
+          ? item.userAgent.trim()
+          : DEFAULT_UA
+      };
+    }).filter(function (item) { return item && item.cookie; });
   } catch (e) { return []; }
 }
 
-function saveCookie(domain, cookie) {
+function getCookiesForDomain(domain) {
+  return getAccountsForDomain(domain).map(function (item) { return item.cookie; });
+}
+
+function saveCookie(domain, cookie, userAgent) {
   try {
-    if (!cookie) return { isNew: false, index: -1 };
-    var cookies = getCookiesForDomain(domain);
-    var existingIdx = cookies.indexOf(cookie);
-    if (existingIdx !== -1) return { isNew: false, index: existingIdx };
-    cookies.push(cookie);
-    $store.write(JSON.stringify(cookies), cookiesKeyFor(domain));
+    var normalizedCookie = normalizeCookie(cookie);
+    var validation = validateCookie(normalizedCookie);
+    if (!validation.valid) {
+      return { isNew: false, index: -1, error: validation.message };
+    }
+    var accounts = getAccountsForDomain(domain);
+    var existingIdx = accounts.findIndex(function (item) {
+      return item.cookie === normalizedCookie;
+    });
+    var normalizedUserAgent = String(userAgent || DEFAULT_UA).trim() || DEFAULT_UA;
+    if (existingIdx !== -1) {
+      if (accounts[existingIdx].userAgent !== normalizedUserAgent) {
+        accounts[existingIdx].userAgent = normalizedUserAgent;
+        $store.write(JSON.stringify(accounts), cookiesKeyFor(domain));
+      }
+      return { isNew: false, index: existingIdx };
+    }
+    accounts.push({ cookie: normalizedCookie, userAgent: normalizedUserAgent });
+    $store.write(JSON.stringify(accounts), cookiesKeyFor(domain));
     addDomain(domain);
-    return { isNew: true, index: cookies.length - 1 };
+    return { isNew: true, index: accounts.length - 1 };
   } catch (e) { return { isNew: false, index: -1 }; }
 }
 
@@ -181,12 +293,13 @@ function getHostFromRequest() {
 }
 
 // ========== 网络请求 ==========
-function request(url, method, cookie, domain, body) {
+function request(url, method, cookie, domain, body, userAgent) {
   var headers = {
     "Content-Type": "application/json;charset=UTF-8",
+    "Accept": "application/json, text/plain, */*",
     "Origin": "https://" + domain,
-    "Referer": "https://" + domain + "/console/current",
-    "User-Agent": UA,
+    "Referer": "https://" + domain + "/console/checkin",
+    "User-Agent": userAgent || UA,
     "Cookie": cookie
   };
   var opts = { url: url, method: method, headers: headers };
@@ -203,22 +316,22 @@ function request(url, method, cookie, domain, body) {
 }
 
 // ========== API ==========
-function checkin(cookie, domain) {
-  return request("https://" + domain + "/api/user/checkin", "POST", cookie, domain, { token: domain }).then(function (resp) {
+function checkin(cookie, domain, userAgent) {
+  return request("https://" + domain + "/api/user/checkin", "POST", cookie, domain, { token: domain }, userAgent).then(function (resp) {
     if (resp.error) return { status: "签到失败", code: -2, message: resp.error, points: "0" };
     if (!resp.data) return { status: "签到失败", code: -2, message: resp.raw, points: "0" };
     var data = resp.data;
-    var code = data.code !== undefined ? data.code : -2;
     var message = data.message || "";
-    var points = String(data.points !== undefined ? data.points : 0);
+    var code = classifyCheckin(data.code !== undefined ? data.code : -2, message);
+    var points = data.points !== undefined ? String(data.points) : parseEarnedPoints(message);
     if (code === 0) return { status: "签到成功", code: 0, message: message, points: points };
     if (code === 1) return { status: "重复签到", code: 1, message: message, points: "0" };
-    return { status: "签到失败", code: code, message: message, points: "0" };
+    return { status: classifyFailureMessage(message), code: code, message: message, points: "0" };
   });
 }
 
-function getStatus(cookie, domain) {
-  return request("https://" + domain + "/api/user/status", "GET", cookie, domain).then(function (resp) {
+function getStatus(cookie, domain, userAgent) {
+  return request("https://" + domain + "/api/user/status", "GET", cookie, domain, undefined, userAgent).then(function (resp) {
     if (resp.error || !resp.data) return { leftDays: "N/A", email: "unknown" };
     var data = resp.data.data || {};
     var leftDays = data.leftDays;
@@ -228,10 +341,13 @@ function getStatus(cookie, domain) {
   });
 }
 
-function getPoints(cookie, domain) {
-  return request("https://" + domain + "/api/user/points", "GET", cookie, domain).then(function (resp) {
+function getPoints(cookie, domain, userAgent) {
+  return request("https://" + domain + "/api/user/points", "GET", cookie, domain, undefined, userAgent).then(function (resp) {
     if (resp.error || !resp.data) return { points: "N/A", pointsNum: 0 };
     var points = resp.data.points;
+    if (points === undefined || points === null) {
+      points = resp.data.data && resp.data.data.points;
+    }
     if (points !== undefined && points !== null) {
       var pointsInt = parseInt(parseFloat(points), 10);
       return { points: "" + pointsInt, pointsNum: pointsInt };
@@ -240,8 +356,8 @@ function getPoints(cookie, domain) {
   });
 }
 
-function exchange(cookie, domain, plan) {
-  return request("https://" + domain + "/api/user/exchange", "POST", cookie, domain, { planType: plan }).then(function (resp) {
+function exchange(cookie, domain, plan, userAgent) {
+  return request("https://" + domain + "/api/user/exchange", "POST", cookie, domain, { planType: plan }, userAgent).then(function (resp) {
     if (resp.error || !resp.data) return "兑换失败";
     var code = resp.data.code !== undefined ? resp.data.code : -2;
     var message = resp.data.message || "";
@@ -250,29 +366,37 @@ function exchange(cookie, domain, plan) {
   });
 }
 
-function checkinForAccount(cookie, domain, accountIndex) {
+function checkinForAccount(cookie, domain, accountIndex, userAgent) {
   var statusBefore, checkinResult, pointsResult, exchangeResult, statusAfter, accountEmail;
 
-  return getStatus(cookie, domain).then(function (sb) {
+  return getStatus(cookie, domain, userAgent).then(function (sb) {
     statusBefore = sb;
     accountEmail = sb.email;
     var displayEmail = accountEmail !== "unknown" ? accountEmail : "Account #" + accountIndex;
     Logger.accountHeader(accountIndex, domain);
     Logger.field("Email", displayEmail);
-    return checkin(cookie, domain);
+    return checkin(cookie, domain, userAgent);
   }).then(function (cr) {
     checkinResult = cr;
-    return getPoints(cookie, domain);
+    return getPoints(cookie, domain, userAgent);
   }).then(function (pr) {
     pointsResult = pr;
+    if (checkinResult.code === 1) {
+      exchangeResult = "跳过(今日已签到)";
+      return exchangeResult;
+    }
+    if (checkinResult.code !== 0) {
+      exchangeResult = "跳过(签到失败)";
+      return exchangeResult;
+    }
     exchangeResult = "跳过(积分不足)";
     if (pointsResult.pointsNum >= 500) {
-      return exchange(cookie, domain, EXCHANGE_PLAN);
+      return exchange(cookie, domain, EXCHANGE_PLAN, userAgent);
     }
     return "跳过(积分不足)";
   }).then(function (er) {
     if (er) exchangeResult = er;
-    return getStatus(cookie, domain);
+    return getStatus(cookie, domain, userAgent);
   }).then(function (sa) {
     statusAfter = sa;
 
@@ -308,7 +432,8 @@ if (isGetHeader) {
   Logger.scriptStart(SCRIPT_NAME, SCRIPT_VERSION, getPlatform(), "Manual");
 
   var allHeaders = $request.headers || {};
-  var cookie = allHeaders.Cookie || allHeaders.cookie || "";
+  var cookie = normalizeCookie(getHeader(allHeaders, "Cookie"));
+  var requestUserAgent = String(getHeader(allHeaders, "User-Agent") || DEFAULT_UA).trim();
   var host = getHostFromRequest();
 
   if (!cookie || !host) {
@@ -317,13 +442,20 @@ if (isGetHeader) {
     notifyFn("GLaDOS 抓包失败", "", "未获取到 Cookie 或 Host");
     $done({});
   } else {
-    var result = saveCookie(host, cookie);
-    var label = "账号 #" + (result.index + 1);
-    Logger.status("✅", result.isNew ? "新账号已保存" : "已存在");
-    Logger.field("Account", label);
-    Logger.field("Domain", host);
-    notifyFn("GLaDOS 抓包", result.isNew ? "新账号已保存" : "已存在", label + " | " + host);
-    $done({});
+    var result = saveCookie(host, cookie, requestUserAgent);
+    if (result.error) {
+      Logger.status("❌", "Cookie 格式无效");
+      Logger.message(result.error);
+      notifyFn("GLaDOS 抓包失败", "Cookie 格式无效", result.error);
+      $done({});
+    } else {
+      var label = "账号 #" + (result.index + 1);
+      Logger.status("✅", result.isNew ? "新账号已保存" : "已存在");
+      Logger.field("Account", label);
+      Logger.field("Domain", host);
+      notifyFn("GLaDOS 抓包", result.isNew ? "新账号已保存" : "已存在", label + " | " + host);
+      $done({});
+    }
   }
 } else {
   var delay = Math.floor(Math.random() * 11);
@@ -334,9 +466,19 @@ if (isGetHeader) {
     var savedDomains = getSavedDomains();
     var allCookies = [];
     for (var d = 0; d < savedDomains.length; d++) {
-      var cookies = getCookiesForDomain(savedDomains[d]);
-      for (var c = 0; c < cookies.length; c++) {
-        allCookies.push({ domain: savedDomains[d], cookie: cookies[c] });
+      var accounts = getAccountsForDomain(savedDomains[d]);
+      for (var c = 0; c < accounts.length; c++) {
+        var account = accounts[c];
+        var validation = validateCookie(account.cookie);
+        if (!validation.valid) {
+          Logger.message("账号 #" + (c + 1) + " Cookie 无效: " + validation.message);
+          continue;
+        }
+        allCookies.push({
+          domain: savedDomains[d],
+          cookie: account.cookie,
+          userAgent: account.userAgent || DEFAULT_UA
+        });
       }
     }
 
@@ -379,7 +521,7 @@ if (isGetHeader) {
 
       var item = allCookies[idx];
       idx++;
-      checkinForAccount(item.cookie, item.domain, idx).then(function (result) {
+      checkinForAccount(item.cookie, item.domain, idx, item.userAgent).then(function (result) {
         allResults.push(result);
         next();
       });
